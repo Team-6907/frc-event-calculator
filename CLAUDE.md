@@ -15,7 +15,7 @@ pip install -r requirements.txt
 # Run tests
 python Test.py
 
-# Run Streamlit dashboard (V2.4.2)
+# Run Streamlit dashboard (V2.5.0)
 streamlit run src/frc_calculator/ui/streamlit_app.py
 ```
 
@@ -33,7 +33,7 @@ frc-calculator regional-pool 2025 --week 6 --top 50
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
-### Streamlit (V2.4.2) UX
+### Streamlit (V2.5.0) UX
 - **Credentials Setup**: Moved to main interface with inline validation, better error messaging, and clear status indicators
 - **Analyze Event tab**: Enhanced form layout with smart event selection (dropdown + manual override), improved progress tracking, and better data visualization with formatted tables
 - **Calculate Points tab**: Redesigned calculator with better input validation, enhanced results display with team info and visual breakdown of points categories
@@ -56,7 +56,9 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 - `frc_events.py`: Handles FRC Events API requests with automatic JSON caching under `cache/`
 - `statbotics.py`: Optional Statbotics EPA integration
 - `utils/event_stats.py`: Event statistical analysis with EPA integration, comprehensive metrics, and radar chart calculations
-- `ui/streamlit_app.py`: Streamlit dashboard with five tabs including radar chart visualization and progress UI
+- `ui/streamlit_app.py`: Streamlit dashboard with five tabs, using shared components and charts
+- `ui/components.py`: Shared Streamlit helpers (event selectors, validation, progress callbacks)
+- `ui/charts.py`: Radar chart rendering utilities
 
 ### Points Calculation Systems
 The codebase implements two regional points systems:
@@ -88,6 +90,11 @@ Notes:
 - CLI shows spinners/progress bars for long operations
 - Streamlit shows: status updates for event analysis, a progress bar + live status text + recent codes for season builds
 - Programmatic API is silent unless progress callback provided
+
+## V2.5.0 Highlights
+- **Shared UI Components**: Centralized event selection, progress callbacks, and validation under `ui/components.py` to remove duplication across tabs
+- **Charts Extraction**: Moved radar chart rendering into `ui/charts.py` for better separation and easier styling updates
+- **Refactors Only**: No functional behavior changes; UI is lighter and more maintainable
 
 ## V2.4.2 Highlights
 - **Bug Fix**: Fixed progress tracking discrepancy in Regional Pool (was showing "20/7 events", now correctly shows "7/7 events")

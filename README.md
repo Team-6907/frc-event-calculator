@@ -59,7 +59,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
-## Streamlit Dashboard (v2.4.2)
+## Streamlit Dashboard (v2.5.0)
 
 A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
@@ -125,6 +125,9 @@ src/frc_calculator/
   models/{event,team,alliance,match}.py
   services/season.py          # Season builder + regional pool
   utils/{io_utils,math_utils}.py
+  ui/components.py            # Shared Streamlit helpers (selection, progress, validation)
+  ui/charts.py                # Radar chart rendering helpers
+  ui/streamlit_app.py         # Streamlit dashboard (tabs use helpers)
 ```
 
 ## Development
@@ -151,6 +154,12 @@ Add your license here.
 - Ensure your `.env` is set and network is reachable on first run
 
 ## Changelog
+
+### v2.5.0 (UI Helpers Refactor)
+- **🧩 Shared UI Components**: Extracted common Streamlit UI patterns into `ui/components.py` (event selectors, validation, progress callbacks)
+- **📈 Charts Module**: Moved radar chart rendering into `ui/charts.py` for cleaner separation and easier styling
+- **🧹 Reduced Duplication**: Refactored Analyze, Points, Statistics, and Radar tabs to use the shared helpers with no behavior change
+- **🔧 Minor Cleanup**: Removed unused imports and unified numeric validation; kept existing UX intact
 
 ### v2.4.3 (Auto-Fetch Event Listings)
 - **🚀 NEW Auto-Fetch Feature**: Automatically fetches 2023, 2024, and 2025 event listings on app startup when credentials are provided

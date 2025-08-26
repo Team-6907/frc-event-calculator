@@ -59,7 +59,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 说明：
 - `regional-pool` 会先计算本赛季赛事数量（较快），随后构建每个赛事（较慢，显示进度条）。数据会缓存到 `cache/`，再次运行更快。
 
-## Streamlit 可视化面板（v2.4.2）
+## Streamlit 可视化面板（v2.5.0）
 
 现代化、用户友好的 Streamlit 面板，全新 UI/UX 设计，提供全面的 FRC 赛事分析工具。
 
@@ -126,6 +126,9 @@ src/frc_calculator/
   models/{event,team,alliance,match}.py
   services/season.py          # Season builder + regional pool
   utils/{io_utils,math_utils}.py
+  ui/components.py            # 共享 Streamlit 组件与工具（选择器、进度、校验）
+  ui/charts.py                # 雷达图渲染工具
+  ui/streamlit_app.py         # 主界面（各标签页使用共享组件）
 ```
 
 ## 开发
@@ -152,6 +155,12 @@ Add your license here.
 - 首次运行需确认 `.env` 配置正确且网络可用
 
 ## 版本记录
+
+### v2.5.0（UI 组件重构）
+- **🧩 共享 UI 组件**：将通用的 Streamlit UI 模式抽取到 `ui/components.py`（赛事选择、数值校验、进度回调）
+- **📈 图表模块**：将雷达图渲染迁移至 `ui/charts.py`，结构更清晰、样式更易维护
+- **🧹 减少重复**：重构“赛事分析、积分计算、赛事统计、赛事雷达图”标签页以复用共享组件，功能无变化
+- **🔧 小幅清理**：移除未使用的导入，统一数值校验逻辑；保持原有交互体验
 
 ### v2.4.3（自动获取赛事列表）
 - **🚀 新增自动获取功能**：当提供凭据时，应用启动时自动获取2023、2024和2025年赛事列表
