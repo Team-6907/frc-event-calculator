@@ -59,7 +59,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
-## Streamlit Dashboard (v2.3.1)
+## Streamlit Dashboard (v2.4.1)
 
 A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
@@ -82,6 +82,7 @@ streamlit run src/frc_calculator/ui/streamlit_app.py
 - **📊 Points Calculator**: Redesigned interface with better input validation, visual points breakdown, and comprehensive team performance metrics
 - **🏁 Regional Pool**: Enhanced season building with detailed progress tracking, qualification status indicators, and summary statistics
 - **📈 Event Statistics**: Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights
+- **📡 Event Radar**: NEW! 8-dimensional radar chart analysis providing comprehensive event insights across multiple performance metrics including competitiveness, team strength, and playoff performance
 
 ### UI Improvements:
 - Modern design with emoji icons and better visual hierarchy
@@ -151,11 +152,14 @@ Add your license here.
 
 ## Changelog
 
-### v2.3.1 (Improved Progress UX)
-- **⚡ Enhanced Progress Display**: Cleaner, less verbose progress indicators for Event Statistics tab
-- **📊 Better EPA Progress**: Shows percentage completion with reduced update frequency for better performance
-- **🎯 Filtered Messages**: Only displays key milestones, removing unnecessary verbose output
-- **🔧 Collapsed Status**: Progress status starts collapsed by default for less intrusive experience
+### v2.4.1 (Colorblind-Friendly Event Radar)
+- **📡 NEW Event Radar Tab**: 8-dimensional radar chart analysis with interactive Plotly visualization
+- **🎨 Colorblind-Friendly Design**: High contrast, colorblind-safe color palette for better accessibility
+- **📊 Radar Chart Dimensions**: Overall competitiveness, ranking point difficulty, non-playoff team strength (TANK), returning team strength (HOME), veteran team count (REIGN), playoff competitiveness (Title), and finals performance (CHAMP)
+- **🔍 Enhanced Analysis**: Comprehensive event profiling with dimensional breakdowns and tier classification
+- **📈 Interactive Visualization**: Plotly-powered radar charts with detailed interpretation guides and metric breakdowns
+- **⚡ Performance Optimizations**: Streamlined EPA progress reporting for improved user experience
+- **🔄 Enhanced EPA Processing**: Improved batch processing with fallback mechanisms for better reliability
 
 ### v2.2.0 (Event Statistics & Analysis)
 - **📈 New Event Statistics Tab**: Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights

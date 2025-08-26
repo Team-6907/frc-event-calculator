@@ -6,6 +6,9 @@ import statistics
 from typing import Any, Dict, List
 
 import streamlit as st
+import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
 
 from frc_calculator.models.event import Event
 from frc_calculator.services.season import Season
@@ -16,7 +19,10 @@ from frc_calculator.data.frc_events import (
     ApiError,
 )
 from frc_calculator.utils.io_utils import load_json_data
-from frc_calculator.utils.event_stats import calculate_event_statistics
+from frc_calculator.utils.event_stats import (
+    calculate_event_statistics,
+    calculate_radar_chart_data,
+)
 
 
 st.set_page_config(
@@ -99,15 +105,21 @@ def get_event_options(season: int) -> list[tuple[str, str]]:
     """Return list of (label, code) for events in a season.
     Label format: "<Event Name> <Season> [<CODE>]".
     """
+    # Ensure season is an integer
+    season = int(season)
+
     # If credentials missing, try to load cached listings file directly; else call API
     if not (os.getenv("AUTH_USERNAME") and os.getenv("AUTH_TOKEN")):
-        cached = load_json_data(f"cache/{season}EventListings.json")
+        cache_file = f"cache/{season}EventListings.json"
+        cached = load_json_data(cache_file)
         if not cached:
+            # Debug: log when cache file is not found
+            print(f"Cache file not found: {cache_file}")
             return []
         listings = cached
     else:
         try:
-            listings = request_event_listings(int(season))
+            listings = request_event_listings(season)
         except AuthError:
             return []
         except Exception:
@@ -752,10 +764,12 @@ def render_event_statistics_tab() -> None:
 
                         progress = current / total
                         progress_bar.progress(progress)
-                        
+
                         # Clean progress display
                         percent = int(progress * 100)
-                        progress_text.text(f"🤖 Fetching EPA data: {percent}% ({current}/{total} teams){eta}")
+                        progress_text.text(
+                            f"🤖 Fetching EPA data: {percent}% ({current}/{total} teams){eta}"
+                        )
 
                         # Show current team being processed (less frequently for performance)
                         if current % 3 == 0 or current <= 3:  # Update every 3rd team
@@ -768,7 +782,7 @@ def render_event_statistics_tab() -> None:
                                 "Loading",
                                 "Calculating average",
                                 "Starting EPA",
-                                "EPA data cached"
+                                "EPA data cached",
                             ]
                             if any(step in msg for step in key_steps):
                                 status.write(f"• {msg}")
@@ -784,9 +798,7 @@ def render_event_statistics_tab() -> None:
             progress_text.empty()
             epa_container.empty()
 
-            status.update(
-                label="✅ Event analysis complete!", state="complete"
-            )
+            status.update(label="✅ Event analysis complete!", state="complete")
 
         st.markdown("---")
 
@@ -1141,6 +1153,559 @@ def render_multi_year_section(
     st.metric("🔄 Returning Teams", len(multi_year_teams))
 
 
+def render_event_radar_tab() -> None:
+    """Render the Event Radar Chart tab with 8-dimensional analysis."""
+    st.markdown("### 📡 Event Radar Comparison Analysis")
+    st.markdown(
+        "Compare up to 5 events using 8-dimensional radar chart analysis. Select multiple events to see side-by-side performance comparisons across all metrics."
+    )
+
+    # Form layout following existing patterns
+    col1, col2, col3 = st.columns([1, 2, 1])
+
+    with col1:
+        season = st.text_input(
+            "Season",
+            value="2025",
+            help="Season locked at 2025",
+            key="radar_season",
+            disabled=True,
+        )
+
+    with col2:
+        # Debug: Show season and event options info
+        st.markdown(f"**Season:** {season} (Type: {type(season)})")
+
+        # Smart event selection for multiple events
+        opts = get_event_options(int(season) if season.isdigit() else 2024)
+
+        # Debug: Show options count
+        st.markdown(f"**Events found:** {len(opts) if opts else 0}")
+
+        if opts:
+            selected_labels = st.multiselect(
+                "Select Events (up to 5)",
+                options=[o[0] for o in opts],
+                default=[opts[0][0]] if opts else [],
+                key="radar_event_select",
+                help="Choose up to 5 events to compare",
+                max_selections=5,
+            )
+            mapping = {label: code for label, code in opts}
+            event_codes = [mapping.get(label, "") for label in selected_labels]
+
+            # Manual override option
+            if st.checkbox("Enter custom event codes", key="manual_override_radar"):
+                custom_codes = st.text_area(
+                    "Event Codes (one per line)",
+                    value="\n".join(event_codes),
+                    placeholder="AZVA\nCAFR\nCTHAR",
+                    key="radar_event_manual",
+                    help="Enter event codes, one per line (max 5)",
+                    height=100,
+                )
+                event_codes = [
+                    code.strip().upper()
+                    for code in custom_codes.split("\n")
+                    if code.strip()
+                ]
+                event_codes = event_codes[:5]  # Limit to 5 events
+        else:
+            st.info(
+                "💡 No events loaded. Enter credentials above or provide event codes."
+            )
+            custom_codes = st.text_area(
+                "Event Codes (one per line)",
+                value="AZVA",
+                placeholder="AZVA\nCAFR\nCTHAR",
+                key="radar_event_manual_fallback",
+                help="Enter event codes, one per line (max 5)",
+                height=100,
+            )
+            event_codes = [
+                code.strip().upper()
+                for code in custom_codes.split("\n")
+                if code.strip()
+            ]
+            event_codes = event_codes[:5]  # Limit to 5 events
+
+    with col3:
+        st.markdown("<br>", unsafe_allow_html=True)
+        include_epa = st.checkbox(
+            "Include EPA Data",
+            value=True,
+            help="EPA data required for TANK and HOME dimensions. Uncheck to exclude these dimensions.",
+            key="include_epa_radar",
+        )
+
+        # Debug: Add cache clearing button for radar tab
+        if st.button("🔄 Clear Event Cache", key="clear_radar_cache"):
+            get_event_options.clear()
+            st.toast("✓ Event cache cleared for radar tab", icon="🔄")
+
+        run = st.button(
+            "📡 Generate Radar Comparison", type="primary", use_container_width=True
+        )
+
+    if not run:
+        return
+
+    if not season.isdigit() or not event_codes:
+        st.warning("⚠️ Please enter a valid season year and at least one event code.")
+        return
+
+    if len(event_codes) == 0:
+        st.warning("⚠️ Please select at least one event to analyze.")
+        return
+
+    try:
+        # Check for data availability for all events
+        if not (os.getenv("AUTH_USERNAME") and os.getenv("AUTH_TOKEN")):
+            missing_events = []
+            for event_code in event_codes:
+                if not os.path.exists(data_filename(int(season), str(event_code))):
+                    missing_events.append(event_code)
+
+            if missing_events:
+                st.error(
+                    f"🔐 **Credentials required**: Set up your API credentials above to fetch data for: {', '.join(missing_events)}"
+                )
+                return
+
+        # Load event data and calculate radar charts for all events
+        all_radar_data = {}
+        events = {}
+
+        with st.status(
+            f"📡 Analyzing {len(event_codes)} events for radar chart comparison...",
+            expanded=False,
+        ) as status:
+            for i, event_code in enumerate(event_codes):
+                status.write(f"• Loading {event_code}...")
+
+                # Event loading progress
+                def on_progress(msg: str):
+                    try:
+                        # Only show key milestones, not every detail
+                        if "teams" in msg or "rankings" in msg or "alliances" in msg:
+                            status.write(f"• {event_code}: Loading {msg}")
+                    except Exception:
+                        pass
+
+                event = Event(int(season), event_code, progress=on_progress)
+                events[event_code] = event
+
+                # Radar chart calculation progress
+                progress_bar = st.progress(0.0)
+                progress_text = st.empty()
+                epa_container = st.empty()
+
+                def radar_progress(msg):
+                    try:
+                        if isinstance(msg, dict) and msg.get("type") == "epa_progress":
+                            # Handle EPA progress with progress bar
+                            current = msg["current"]
+                            total = msg["total"]
+                            eta = msg.get("eta", "")
+
+                            progress = current / total
+                            progress_bar.progress(progress)
+
+                            # Clean progress display
+                            percent = int(progress * 100)
+                            progress_text.text(
+                                f"🤖 {event_code}: Fetching EPA data: {percent}% ({current}/{total} teams){eta}"
+                            )
+
+                            # Show current team being processed
+                            if current % 3 == 0 or current <= 3:
+                                epa_container.caption(
+                                    f"{event_code}: Processing Team {msg['team']}..."
+                                )
+                        else:
+                            # Handle regular text progress - only show key milestones
+                            if isinstance(msg, str):
+                                key_steps = [
+                                    "Calculating Overall",
+                                    "Calculating RP",
+                                    "Calculating TANK",
+                                    "Calculating REIGN",
+                                    "Calculating Title",
+                                    "Calculating CHAMP",
+                                    "Fetching historical data",
+                                ]
+                                if any(step in msg for step in key_steps):
+                                    status.write(f"• {event_code}: {msg}")
+                    except Exception:
+                        pass
+
+                radar_data = calculate_radar_chart_data(
+                    event, progress_callback=radar_progress, include_epa=include_epa
+                )
+                all_radar_data[event_code] = radar_data
+
+                # Clean up progress elements
+                progress_bar.empty()
+                progress_text.empty()
+                epa_container.empty()
+
+            status.update(
+                label="✅ All events analyzed successfully!", state="complete"
+            )
+
+        st.markdown("---")
+
+        # Display radar chart comparison and analysis
+        render_radar_chart_comparison(all_radar_data, int(season))
+        render_radar_dimensions_comparison(all_radar_data)
+
+    except AuthError:
+        st.error(
+            "🔐 **Authentication Error**: Invalid credentials. Please check your username and token above."
+        )
+    except ApiError as e:
+        st.warning(f"🌐 **API Error**: {str(e)}")
+    except Exception as e:
+        st.error("❌ **Error**: Failed to generate radar chart analysis.")
+        with st.expander("See error details"):
+            st.exception(e)
+
+
+def render_radar_chart_visualization(
+    radar_data: Dict[str, float], event_code: str, season: int
+) -> None:
+    """Render the radar chart visualization."""
+    st.markdown(f"### 📡 {event_code} {season} - 8-Dimensional Radar Analysis")
+
+    # Prepare data for radar chart
+    dimensions = list(radar_data.keys())
+    values = list(radar_data.values())
+
+    # Create radar chart using plotly
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatterpolar(
+            r=values,
+            theta=dimensions,
+            fill="toself",
+            name=f"{event_code} {season}",
+            line=dict(color="rgb(0, 114, 178)", width=3),  # High contrast blue
+            fillcolor="rgba(0, 114, 178, 0.2)",  # Semi-transparent blue
+        )
+    )
+
+    # Determine max value for proper scaling
+    max_value = max(values) if values else 20
+    scale_max = max(20, max_value * 1.2)  # At least 20, or 120% of max value
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, scale_max],
+                gridcolor="rgba(255, 255, 255, 0.6)",  # Higher contrast white grid
+                tickfont=dict(size=10, color="white"),
+                linecolor="rgba(255, 255, 255, 0.8)",  # High contrast axis lines
+            ),
+            angularaxis=dict(
+                tickfont=dict(size=12, color="white"),
+                linecolor="rgba(255, 255, 255, 0.8)",  # High contrast axis lines
+            ),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        showlegend=True,
+        title=dict(
+            text=f"Event Performance Radar - {event_code} {season}",
+            x=0.5,
+            font=dict(size=16),
+        ),
+        font=dict(color="white"),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=500,
+    )
+
+    # Display the chart
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Add interpretation guide
+    with st.expander("📖 Radar Chart Interpretation Guide"):
+        st.markdown(
+            """
+        **Dimension Explanations:**
+
+        - **Overall**: Event competitiveness (20 - qual avg / 10) - *higher = weaker region*
+        - **RP**: Ranking point difficulty (20-(RP-3)*10) - *RP=3.0→20pts (weak), RP=4.0→10pts (medium), RP=5.0→0pts (strong)*
+        - **TANK**: Non-playoff teams' strength (20 - EPA median / 6) - *higher = weaker non-playoff teams*
+        - **HOME**: Returning teams' strength (20 - EPA median / 6) - *higher = weaker returning teams*
+        - **REIGN**: Veteran team presence (20 - count * 2.5) - *higher = fewer veteran teams (weaker region)*
+        - **TITLE**: Playoff competitiveness (20 - playoff avg / 10) - *higher = weaker playoff performance*
+        - **CHAMP**: Finals peak performance (20 - highest score / 25) - *higher = weaker finals performance*
+
+        **Reading the Chart:**
+        - **Larger area = weaker overall region** (higher scores across dimensions)
+        - **Smaller area = stronger overall region** (lower scores across dimensions)
+        - **Higher values = weaker performance** in that dimension
+        - **Lower values = stronger performance** in that dimension
+        """
+        )
+
+
+def render_radar_dimensions_breakdown(radar_data: Dict[str, float]) -> None:
+    """Render detailed breakdown of radar dimensions."""
+    st.markdown("### 📊 Dimensional Breakdown")
+
+    # Create two columns for metrics display
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### 🏆 Competition Metrics")
+        st.metric(
+            "Overall",
+            f"{radar_data.get('Overall', 0):.2f}",
+            help="Event competitiveness - higher = weaker region",
+        )
+        st.metric(
+            "RP",
+            f"{radar_data.get('RP', 0):.2f}",
+            help="Ranking point difficulty - RP=3.0→20pts (weak), RP=4.0→10pts (medium), RP=5.0→0pts (strong)",
+        )
+        st.metric(
+            "TITLE",
+            f"{radar_data.get('TITLE', 0):.2f}",
+            help="Playoff competitiveness - higher = weaker playoff performance",
+        )
+        st.metric(
+            "CHAMP",
+            f"{radar_data.get('CHAMP', 0):.2f}",
+            help="Finals performance - higher = weaker finals",
+        )
+
+    with col2:
+        st.markdown("#### 🤖 Team Strength Metrics")
+        st.metric(
+            "TANK",
+            f"{radar_data.get('TANK', 0):.2f}",
+            help="Strength of non-playoff teams - higher = weaker teams",
+        )
+        st.metric(
+            "HOME",
+            f"{radar_data.get('HOME', 0):.2f}",
+            help="Strength of returning teams - higher = weaker teams",
+        )
+        st.metric(
+            "REIGN",
+            f"{radar_data.get('REIGN', 0):.2f}",
+            help="Veteran team presence - higher = fewer veteran teams (weaker region)",
+        )
+        st.markdown("---")
+
+    # Summary analysis
+    st.markdown("#### 📈 Event Profile Summary")
+
+    # Calculate overall score and provide interpretation
+    total_score = sum(v for v in radar_data.values() if isinstance(v, (int, float)))
+    avg_score = total_score / len(radar_data) if radar_data else 0
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Total Score", f"{total_score:.1f}")
+    with col2:
+        st.metric("Average Score", f"{avg_score:.2f}")
+
+
+def render_radar_chart_comparison(
+    all_radar_data: Dict[str, Dict[str, float]], season: int
+) -> None:
+    """Render the radar chart comparison visualization for multiple events."""
+    st.markdown(f"### 📡 Event Radar Comparison - {season} Season")
+
+    # Prepare data for radar chart comparison
+    dimensions = (
+        list(next(iter(all_radar_data.values())).keys()) if all_radar_data else []
+    )
+
+    # Create radar chart using plotly with multiple traces
+    fig = go.Figure()
+
+    # Colorblind-friendly high contrast palette for multiple events
+    colors = [
+        "rgb(0, 114, 178)",  # High contrast blue
+        "rgb(213, 94, 0)",  # High contrast orange
+        "rgb(0, 158, 115)",  # High contrast teal
+        "rgb(204, 121, 167)",  # High contrast magenta
+        "rgb(230, 159, 0)",  # High contrast yellow
+    ]
+
+    for i, (event_code, radar_data) in enumerate(all_radar_data.items()):
+        values = list(radar_data.values())
+        color = colors[i % len(colors)]
+
+        fig.add_trace(
+            go.Scatterpolar(
+                r=values,
+                theta=dimensions,
+                fill="toself",
+                name=f"{event_code} {season}",
+                line=dict(
+                    color=color, width=3
+                ),  # Increased line width for better visibility
+                fillcolor=color.replace("rgb", "rgba").replace(
+                    ")", ", 0.2)"
+                ),  # Reduced opacity for better contrast
+                opacity=0.8,  # Increased overall opacity for better visibility
+            )
+        )
+
+    # Determine max value for proper scaling
+    all_values = [
+        val
+        for data in all_radar_data.values()
+        for val in data.values()
+        if isinstance(val, (int, float))
+    ]
+    max_value = max(all_values) if all_values else 20
+    scale_max = max(20, max_value * 1.2)  # At least 20, or 120% of max value
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, scale_max],
+                gridcolor="rgba(255, 255, 255, 0.6)",  # Higher contrast white grid
+                tickfont=dict(size=10, color="white"),
+                linecolor="rgba(255, 255, 255, 0.8)",  # High contrast axis lines
+            ),
+            angularaxis=dict(
+                tickfont=dict(size=12, color="white"),
+                linecolor="rgba(255, 255, 255, 0.8)",  # High contrast axis lines
+            ),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        showlegend=True,
+        title=dict(
+            text=f"Event Performance Radar Comparison - {season} Season",
+            x=0.5,
+            font=dict(size=16),
+        ),
+        font=dict(color="white"),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=500,
+    )
+
+    # Display the chart
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Add interpretation guide
+    with st.expander("📖 Radar Chart Comparison Guide"):
+        st.markdown(
+            """
+        **Dimension Explanations:**
+
+        - **Overall**: Event competitiveness (20 - qual avg / 10) - *higher = weaker region*
+        - **RP**: Ranking point difficulty (20-(RP-3)*10) - *RP=3.0→20pts (weak), RP=4.0→10pts (medium), RP=5.0→0pts (strong)*
+        - **TANK**: Non-playoff teams' strength (20 - EPA median / 6) - *higher = weaker non-playoff teams*
+        - **HOME**: Returning teams' strength (20 - EPA median / 6) - *higher = weaker returning teams*
+        - **REIGN**: Veteran team presence (20 - count * 2.5) - *higher = fewer veteran teams (weaker region)*
+        - **TITLE**: Playoff competitiveness (20 - playoff avg / 10) - *higher = weaker playoff performance*
+        - **CHAMP**: Finals peak performance (20 - highest score / 25) - *higher = weaker finals performance*
+
+        **Reading the Comparison:**
+        - **Larger areas = weaker regions** (higher scores across dimensions)
+        - **Smaller areas = stronger regions** (lower scores across dimensions)
+        - **Higher values = weaker performance** in that dimension
+        - **Lower values = stronger performance** in that dimension
+        - Overlapping areas show similar performance profiles
+        - Use the legend to toggle individual events on/off
+        """
+        )
+
+
+def render_radar_dimensions_comparison(
+    all_radar_data: Dict[str, Dict[str, float]],
+) -> None:
+    """Render detailed comparison breakdown of radar dimensions across multiple events."""
+    st.markdown("### 📊 Dimensional Comparison")
+
+    # Get all dimensions from the first event (they should all have the same dimensions)
+    dimensions = (
+        list(next(iter(all_radar_data.values())).keys()) if all_radar_data else []
+    )
+
+    # Create comparison table
+    comparison_data = []
+    for event_code, radar_data in all_radar_data.items():
+        row = {"Event": event_code}
+        for dimension in dimensions:
+            row[dimension] = f"{radar_data.get(dimension, 0):.2f}"
+
+        # Calculate total and average scores
+        total_score = sum(v for v in radar_data.values() if isinstance(v, (int, float)))
+        avg_score = total_score / len(radar_data) if radar_data else 0
+        row["Total"] = f"{total_score:.1f}"
+        row["Average"] = f"{avg_score:.2f}"
+
+        comparison_data.append(row)
+
+    # Display comparison table
+    if comparison_data:
+        st.markdown("#### 📋 Event Performance Comparison")
+        df = pd.DataFrame(comparison_data)
+        st.dataframe(df, use_container_width=True)
+
+    # Create side-by-side metrics for each dimension
+    st.markdown("#### 📊 Dimension-by-Dimension Analysis")
+
+    for dimension in dimensions:
+        st.markdown(f"**{dimension}**")
+        cols = st.columns(len(all_radar_data))
+
+        for i, (event_code, radar_data) in enumerate(all_radar_data.items()):
+            with cols[i]:
+                value = radar_data.get(dimension, 0)
+                st.metric(
+                    event_code,
+                    f"{value:.2f}",
+                    help=f"{dimension} score for {event_code}",
+                )
+
+        st.markdown("---")
+
+    # Summary analysis
+    st.markdown("#### 📈 Comparison Summary")
+
+    # Find best performing event in each dimension
+    best_performers = {}
+    for dimension in dimensions:
+        best_event = max(all_radar_data.items(), key=lambda x: x[1].get(dimension, 0))
+        best_performers[dimension] = (best_event[0], best_event[1].get(dimension, 0))
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**🏆 Top Performers by Dimension:**")
+        for dimension, (event, score) in best_performers.items():
+            st.markdown(f"- **{dimension}**: {event} ({score:.2f})")
+
+    with col2:
+        # Calculate overall rankings
+        event_totals = {}
+        for event_code, radar_data in all_radar_data.items():
+            total = sum(v for v in radar_data.values() if isinstance(v, (int, float)))
+            event_totals[event_code] = total
+
+        # Sort by total score
+        sorted_events = sorted(event_totals.items(), key=lambda x: x[1], reverse=True)
+
+        st.markdown("**📊 Overall Rankings:**")
+        for i, (event, total) in enumerate(sorted_events):
+            medal = (
+                "🥇" if i == 0 else "🥈" if i == 1 else "🥉" if i == 2 else f"{i+1}."
+            )
+            st.markdown(f"{medal} **{event}**: {total:.1f}")
+
+
 def main() -> None:
     st.title("🏁 FRC Event Calculator")
     st.markdown(
@@ -1148,15 +1713,16 @@ def main() -> None:
     )
 
     # Credentials setup with better UX
-    has_creds = render_credentials_setup()
+    render_credentials_setup()
 
     # Main application tabs
-    tab1, tab2, tab3, tab4 = st.tabs(
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
         [
             "🏆 Analyze Event",
             "📊 Calculate Points",
             "🏁 Regional Pool",
             "📈 Event Statistics",
+            "📡 Event Radar",
         ]
     )
 
@@ -1168,6 +1734,8 @@ def main() -> None:
         render_regional_pool_tab()
     with tab4:
         render_event_statistics_tab()
+    with tab5:
+        render_event_radar_tab()
 
 
 if __name__ == "__main__":
