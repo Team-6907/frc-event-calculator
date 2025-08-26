@@ -18,7 +18,7 @@ class AllianceBase:
 
 class AnonymousAlliance(AllianceBase):
     def __init__(self, event):
-        AllianceBase.__init__(self, event)
+        super().__init__(event)
         self.match = None  # quals should have a specific match
 
     def __str__(self):
