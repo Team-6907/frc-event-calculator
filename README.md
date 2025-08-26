@@ -59,6 +59,31 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `data/`.
 
+## Streamlit Dashboard
+
+An optional Streamlit dashboard provides a point-and-click interface with tables and progress indicators.
+
+Installation:
+
+```bash
+pip install -e .
+pip install -r requirements.txt  # ensures streamlit is installed
+```
+
+Run the dashboard:
+
+```bash
+streamlit run src/frc_calculator/ui/streamlit_app.py
+```
+
+Notes:
+- Enter your FRC Events API credentials in the left sidebar (they are used only locally for requests). You can also set `AUTH_USERNAME` and `AUTH_TOKEN` in your shell or `.env`.
+- Use "Validate credentials" to quickly confirm your username/token.
+- The dashboard provides three tabs: Analyze Event, Calculate Points, and Regional Pool.
+- Event selection uses a dropdown populated from FRC listings (labels like "Arizona Valley Regional 2024 [AZVA]") with a manual override field.
+- Building a full season can take time on first run; cached data under `data/` speeds up subsequent runs. The Regional Pool tab shows a progress bar, live status (X/Y built + latest code), and a recent events list.
+- Without credentials, the app works only from local cache under `data/`; tabs clearly warn when credentials are required to fetch.
+
 ## Python API
 
 ```python
@@ -120,6 +145,12 @@ Add your license here.
 - Ensure your `.env` is set and network is reachable on first run
 
 ## Changelog
+
+### v2.0.0 (Refactor)
+- Added Streamlit dashboard with event dropdowns and manual overrides
+- Credential validation in UI; clear auth errors; safer API client with timeouts
+- Improved progress feedback for regional pool builds (status + recent events)
+- Documentation updated (README, README.zh-CN, CLAUDE.md)
 
 ### v1.0.0
 - Refactored to a clean package with CLI and progress indicators

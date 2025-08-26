@@ -59,6 +59,30 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 说明：
 - `regional-pool` 会先计算本赛季赛事数量（较快），随后构建每个赛事（较慢，显示进度条）。数据会缓存到 `data/`，再次运行更快。
 
+## Streamlit 可视化面板（V2）
+
+提供更便捷的图形化界面与更友好的进度展示。
+
+安装：
+
+```bash
+pip install -e .
+pip install -r requirements.txt  # 确保安装 streamlit
+```
+
+运行：
+
+```bash
+streamlit run src/frc_calculator/ui/streamlit_app.py
+```
+
+说明：
+- 在左侧侧边栏输入 FRC Events API 凭据（仅用于本地请求）；亦可通过 `.env` 设置 `AUTH_USERNAME` 与 `AUTH_TOKEN`。
+- 点击“Validate credentials”快速校验用户名/令牌。
+- 赛事选择下拉框来自 FRC 列表，显示“赛事名 年份 [代码]”（如“Arizona Valley Regional 2024 [AZVA]”），也可手动输入代码。
+- 区域池构建首次运行会较慢；面板会显示进度条、实时状态（已构建数量与最新赛事代码）以及近期构建的赛事列表，后续运行因缓存而更快。
+- 若无凭据，仅可使用 `data/` 下已有的本地缓存；界面会明确提示。
+
 ## 编程接口
 
 ```python
@@ -120,6 +144,12 @@ Add your license here.
 - 首次运行需确认 `.env` 配置正确且网络可用
 
 ## 版本记录
+
+### v2.0.0（重构）
+- 新增 Streamlit 仪表盘（下拉选择赛事 + 手动覆盖）
+- 支持凭据校验，错误更清晰；API 客户端更健壮并带超时
+- 区域池构建进度反馈增强（状态 + 最近赛事列表）
+- 更新文档（README、README.zh-CN、CLAUDE.md）
 
 ### v1.0.0
 - 重构为模块化包，提供 CLI 与实时进度
