@@ -59,9 +59,9 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `data/`.
 
-## Streamlit Dashboard
+## Streamlit Dashboard (v2.1.0)
 
-An optional Streamlit dashboard provides a point-and-click interface with tables and progress indicators.
+A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
 Installation:
 
@@ -76,13 +76,17 @@ Run the dashboard:
 streamlit run src/frc_calculator/ui/streamlit_app.py
 ```
 
-Notes:
-- Enter your FRC Events API credentials in the left sidebar (they are used only locally for requests). You can also set `AUTH_USERNAME` and `AUTH_TOKEN` in your shell or `.env`.
-- Use "Validate credentials" to quickly confirm your username/token.
-- The dashboard provides three tabs: Analyze Event, Calculate Points, and Regional Pool.
-- Event selection uses a dropdown populated from FRC listings (labels like "Arizona Valley Regional 2024 [AZVA]") with a manual override field.
-- Building a full season can take time on first run; cached data under `data/` speeds up subsequent runs. The Regional Pool tab shows a progress bar, live status (X/Y built + latest code), and a recent events list.
-- Without credentials, the app works only from local cache under `data/`; tabs clearly warn when credentials are required to fetch.
+### Features:
+- **🔐 Enhanced Credential Setup**: Moved from sidebar to main interface with inline validation, clear error messaging, and better security indicators
+- **🏆 Event Analysis**: Smart event selection (dropdown + manual override), improved progress tracking, and formatted data tables with team info
+- **📊 Points Calculator**: Redesigned interface with better input validation, visual points breakdown, and comprehensive team performance metrics
+- **🏁 Regional Pool**: Enhanced season building with detailed progress tracking, qualification status indicators, and summary statistics
+
+### UI Improvements:
+- Modern design with emoji icons and better visual hierarchy
+- Mobile-friendly forms with text inputs instead of number spinners
+- Enhanced error handling with expandable details and contextual help
+- Better data visualization with column configuration and status indicators
 
 ## Python API
 
@@ -145,6 +149,13 @@ Add your license here.
 - Ensure your `.env` is set and network is reachable on first run
 
 ## Changelog
+
+### v2.1.0 (UI/UX Overhaul)
+- **🎨 Complete UI Redesign**: Modern interface with emoji icons, better visual hierarchy, and improved spacing
+- **📱 Mobile-Friendly Forms**: Replaced number spinners with text inputs for better mobile experience
+- **🔐 Enhanced Credential Management**: Moved from sidebar to main interface with inline validation and clearer error messaging
+- **📊 Better Data Visualization**: Enhanced table formatting, column configuration, progress indicators, and summary statistics
+- **🚀 Improved User Experience**: Contextual help, expandable error details, and actionable guidance messages
 
 ### v2.0.0 (Refactor)
 - Added Streamlit dashboard with event dropdowns and manual overrides

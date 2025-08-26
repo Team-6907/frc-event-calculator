@@ -33,11 +33,11 @@ frc-calculator regional-pool 2025 --week 6 --top 50
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
-### Streamlit (V2) UX
-- Sidebar: enter `AUTH_USERNAME` and `AUTH_TOKEN`. Use "Validate credentials" to check quickly. "Refresh event listings" clears cached listings.
-- Analyze Event tab: choose season and event from dropdown (labels like "Arizona Valley Regional 2024 [AZVA]") or enter a code manually. Shows progress and renders tables. Requires credentials if cache missing.
-- Calculate Points tab: compute 2025 points for a team with breakdown and best 3 match scores. Requires credentials if cache missing.
-- Regional Pool tab: builds season with a progress bar, live status (built count + latest code), and recent events list. Requires credentials unless all events are cached.
+### Streamlit (V2.1.0) UX
+- **Credentials Setup**: Moved to main interface with inline validation, better error messaging, and clear status indicators
+- **Analyze Event tab**: Enhanced form layout with smart event selection (dropdown + manual override), improved progress tracking, and better data visualization with formatted tables
+- **Calculate Points tab**: Redesigned calculator with better input validation, enhanced results display with team info and visual breakdown of points categories
+- **Regional Pool tab**: Improved season building with detailed progress tracking, enhanced table formatting with qualification status indicators, and summary statistics
 
 ## Architecture
 
@@ -86,7 +86,14 @@ Notes:
 - Streamlit shows: status updates for event analysis, a progress bar + live status text + recent codes for season builds
 - Programmatic API is silent unless progress callback provided
 
-## V2 Highlights
-- Streamlit dashboard with event dropdowns and manual overrides
-- Credential validation, clear auth errors, and safer API client with timeouts and error handling
-- Improved progress feedback for building regional pools
+## V2.1.0 Highlights
+- **Modernized UI/UX**: Complete Streamlit interface redesign with better visual hierarchy, emoji icons, and improved spacing
+- **Enhanced Forms**: Replaced number spinners with text inputs, smart event selection, and better mobile experience
+- **Improved Credential Management**: Moved from sidebar to main interface with inline validation and clearer error messaging
+- **Better Data Visualization**: Enhanced table formatting, column configuration, progress indicators, and summary statistics
+- **Enhanced Error Handling**: Expandable error details, contextual help, and actionable guidance messages
+
+## Testing Notes
+- Tests in `Test.py` use live FRC Events API data or cached responses from `data/` directory
+- Tests verify core functionality: event parsing, team rankings, alliance structure, matches, awards, and points calculations
+- For consistent test results, ensure API credentials are configured or that relevant cache files exist in `data/`
