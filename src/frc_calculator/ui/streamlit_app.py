@@ -27,6 +27,7 @@ from frc_calculator.ui.components import (
     make_status_progress,
     validate_int,
     epa_progress_ui,
+    render_context_bar,
 )
 from frc_calculator.ui.charts import (
     render_radar_chart_visualization,
@@ -241,8 +242,9 @@ def render_event_analysis_tab() -> None:
     st.markdown("### 🏆 Event Analysis")
     st.markdown("Analyze team rankings, alliances, and awards for any FRC event.")
 
-    # Unified season/event selection
-    season, event_code = select_event_single(2024, "analysis", get_event_options)
+    # Use global context bar (event scope)
+    ctx = render_context_bar("analysis", "event", get_event_options, season_default=2024)
+    season, event_code = ctx.get("season"), ctx.get("event")
     run = st.button("🔍 Analyze Event", type="primary")
 
     if not run:
@@ -332,15 +334,10 @@ def render_points_tab() -> None:
     st.markdown("### 📊 Team Points Calculator")
     st.markdown("Calculate regional points for any team using 2025+ FRC rules.")
 
-    # Inputs
-    season, event_code = select_event_single(2024, "points", get_event_options)
-    team_number_str = st.text_input(
-        "Team Number",
-        value="1234",
-        placeholder="e.g., 254",
-        help="FRC team number",
-        key="points_team",
-    )
+    # Inputs via global context bar (event scope + team)
+    ctx = render_context_bar("points", "event", get_event_options, season_default=2024)
+    season, event_code = ctx.get("season"), ctx.get("event")
+    team_number_str = str(ctx.get("team", "")).strip()
     run = st.button("📈 Calculate Points", type="primary")
 
     if not run:
@@ -436,43 +433,19 @@ def render_regional_pool_tab() -> None:
         "View championship qualification standings based on regional point calculations."
     )
 
-    # Better form layout
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+    # Scope-aware context bar (season scope for pool)
+    ctx = render_context_bar("pool", "season", get_event_options, season_default=2025)
 
-    with col1:
-        season = st.text_input(
-            "Season",
-            value="2025",
-            help="Competition season year",
-            key="pool_season",
-        )
-
-    with col2:
-        use_season = st.text_input(
-            "Rules Season",
-            value="2025",
-            help="Which year's rules to use for calculations",
-            key="pool_rules_season",
-        )
-
-    with col3:
-        week = st.selectbox(
-            "Week",
-            options=[1, 2, 3, 4, 5, 6],
-            index=5,  # Default to week 6
-            help="Calculate standings through this week",
-            key="pool_week",
-        )
-
-    with col4:
+    # Additional per-tab inputs
+    col_a, col_b = st.columns([1, 1])
+    with col_a:
         top_n = st.text_input(
             "Top N (0=all)",
             value="50",
             help="Show top N teams (0 for all teams)",
             key="pool_top",
         )
-
-    with col5:
+    with col_b:
         st.markdown("<br>", unsafe_allow_html=True)
         run = st.button("🏆 Build Standings", type="primary", use_container_width=True)
 
@@ -480,8 +453,8 @@ def render_regional_pool_tab() -> None:
         return
 
     # Validate inputs
-    season_int = validate_int(season, "season")
-    use_season_int = validate_int(use_season, "rules season")
+    season_int = validate_int(str(ctx.get("season")), "season")
+    use_season_int = validate_int(str(ctx.get("pool_rules")), "rules season")
     top_n_int = validate_int(top_n, "top N")
     if season_int is None or use_season_int is None or top_n_int is None:
         return
@@ -494,7 +467,7 @@ def render_regional_pool_tab() -> None:
             return
 
         # Pre-count events for better progress tracking
-        week_int = int(week)
+        week_int = int(ctx.get("pool_week"))
         top_n_int = int(top_n_int) if top_n_int != 0 else 0
 
         try:
@@ -619,7 +592,8 @@ def render_event_statistics_tab() -> None:
     # Unified inputs
     col_left, col_right = st.columns([2, 1])
     with col_left:
-        season, event_code = select_event_single(2024, "stats", get_event_options)
+        ctx = render_context_bar("stats", "event", get_event_options, season_default=2024)
+        season, event_code = ctx.get("season"), ctx.get("event")
     with col_right:
         include_epa = st.checkbox(
             "Include EPA Data",

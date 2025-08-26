@@ -59,7 +59,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
-## Streamlit Dashboard (v2.5.0)
+## Streamlit Dashboard (v2.6.0)
 
 A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
@@ -78,9 +78,10 @@ streamlit run src/frc_calculator/ui/streamlit_app.py
 
 ### Features:
 - **🔐 Enhanced Credential Setup**: Moved from sidebar to main interface with inline validation, clear error messaging, and better security indicators
+- **🧭 Global Context Bar (NEW)**: Single, persistent bar for Season/Event (event‑scoped tabs) and Season/Rules/Week (Regional Pool). Selections persist across tabs and sync to the URL for deep links.
 - **🏆 Event Analysis**: Smart event selection (dropdown + manual override), improved progress tracking, and formatted data tables with team info
-- **📊 Points Calculator**: Redesigned interface with better input validation, visual points breakdown, and comprehensive team performance metrics
-- **🏁 Regional Pool**: Enhanced season building with detailed progress tracking, qualification status indicators, and summary statistics
+- **📊 Points Calculator**: Team dropdown populated from the selected event for intuitive selection; enhanced results with visual points breakdown and team details
+- **🏁 Regional Pool**: Season‑scoped inputs moved into the context bar with detailed progress tracking, qualification status indicators, and summary statistics
 - **📈 Event Statistics**: Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights
 - **📡 Event Radar**: NEW! 8-dimensional radar chart analysis providing comprehensive event insights across multiple performance metrics including competitiveness, team strength, and playoff performance
 
@@ -89,6 +90,7 @@ streamlit run src/frc_calculator/ui/streamlit_app.py
 - Mobile-friendly forms with text inputs instead of number spinners
 - Enhanced error handling with expandable details and contextual help
 - Better data visualization with column configuration and status indicators
+- Deep-linking via query params for `tab`, `scope`, `season`, `event`, `team`, `pool_week`, and `pool_rules`
 
 ## Python API
 
@@ -154,6 +156,13 @@ Add your license here.
 - Ensure your `.env` is set and network is reachable on first run
 
 ## Changelog
+
+### v2.6.0 (Scope-Aware Context Bar + Team Dropdown)
+- **🧭 Global Context Bar**: Unified season/event selectors across tabs with scope awareness (event vs season) and URL deep-linking
+- **📊 Points Tab Team Dropdown**: Team number is now a dropdown populated from the selected event (falls back to text input when data unavailable)
+- **🏁 Regional Pool Integration**: Season, rules season, and week inputs moved into the context bar (Top N stays local)
+- **🔗 URL Sync**: Selections mirror to query params for shareable links and state restoration
+- **🧹 Refactor**: Removed per-tab duplicate selectors in Analyze, Points, and Statistics tabs, now consume shared context
 
 ### v2.5.0 (UI Helpers Refactor)
 - **🧩 Shared UI Components**: Extracted common Streamlit UI patterns into `ui/components.py` (event selectors, validation, progress callbacks)

@@ -15,7 +15,7 @@ pip install -r requirements.txt
 # Run tests
 python Test.py
 
-# Run Streamlit dashboard (V2.5.0)
+# Run Streamlit dashboard (V2.6.0)
 streamlit run src/frc_calculator/ui/streamlit_app.py
 ```
 
@@ -33,13 +33,13 @@ frc-calculator regional-pool 2025 --week 6 --top 50
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
-### Streamlit (V2.5.0) UX
-- **Credentials Setup**: Moved to main interface with inline validation, better error messaging, and clear status indicators
-- **Analyze Event tab**: Enhanced form layout with smart event selection (dropdown + manual override), improved progress tracking, and better data visualization with formatted tables
-- **Calculate Points tab**: Redesigned calculator with better input validation, enhanced results display with team info and visual breakdown of points categories
-- **Regional Pool tab**: Improved season building with detailed progress tracking, enhanced table formatting with qualification status indicators, and summary statistics
-- **Event Statistics tab**: Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights
-- **Event Radar tab**: NEW! 8-dimensional radar chart analysis providing comprehensive event insights across multiple performance metrics including competitiveness, team strength, and playoff performance
+### Streamlit (V2.6.0) UX
+- **Global Context Bar (scope-aware)**: Single persistent bar for Season/Event on event-scoped tabs, and Season/Rules/Week on Regional Pool; selections persist across tabs and sync to URL query params
+- **Analyze Event tab**: Uses the context bar for season/event, retains improved progress and tables
+- **Calculate Points tab**: Uses the context bar for season/event; Team input is now a dropdown populated from the selected event (falls back to manual input if data unavailable)
+- **Regional Pool tab**: Season/Rules/Week moved to the context bar with detailed progress tracking and better summaries
+- **Event Statistics tab**: Uses the context bar for season/event; retains EPA integration and analytics
+- **Event Radar tab**: Multi-event comparison remains specialized (unchanged)
 
 ## Architecture
 
@@ -57,7 +57,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 - `statbotics.py`: Optional Statbotics EPA integration
 - `utils/event_stats.py`: Event statistical analysis with EPA integration, comprehensive metrics, and radar chart calculations
 - `ui/streamlit_app.py`: Streamlit dashboard with five tabs, using shared components and charts
-- `ui/components.py`: Shared Streamlit helpers (event selectors, validation, progress callbacks)
+- `ui/components.py`: Shared Streamlit helpers (context bar, event selectors, validation, progress callbacks)
 - `ui/charts.py`: Radar chart rendering utilities
 
 ### Points Calculation Systems
@@ -90,6 +90,12 @@ Notes:
 - CLI shows spinners/progress bars for long operations
 - Streamlit shows: status updates for event analysis, a progress bar + live status text + recent codes for season builds
 - Programmatic API is silent unless progress callback provided
+
+## V2.6.0 Highlights
+- **Scope-Aware Context Bar**: Unified selection experience across tabs with URL deep-linking
+- **Team Dropdown in Points**: Team picker derives from event teams; improves discoverability and speed
+- **Regional Pool Integration**: Season/Rules/Week inputs centralized; Top N remains local to tab
+- **State Persistence**: Session + query params keep context stable across reloads and shareable via URL
 
 ## V2.5.0 Highlights
 - **Shared UI Components**: Centralized event selection, progress callbacks, and validation under `ui/components.py` to remove duplication across tabs
