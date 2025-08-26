@@ -15,7 +15,7 @@ pip install -r requirements.txt
 # Run tests
 python Test.py
 
-# Run Streamlit dashboard (V2)
+# Run Streamlit dashboard (V2.3.1)
 streamlit run src/frc_calculator/ui/streamlit_app.py
 ```
 
@@ -33,11 +33,12 @@ frc-calculator regional-pool 2025 --week 6 --top 50
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
-### Streamlit (V2.1.0) UX
+### Streamlit (V2.3.1) UX
 - **Credentials Setup**: Moved to main interface with inline validation, better error messaging, and clear status indicators
 - **Analyze Event tab**: Enhanced form layout with smart event selection (dropdown + manual override), improved progress tracking, and better data visualization with formatted tables
 - **Calculate Points tab**: Redesigned calculator with better input validation, enhanced results display with team info and visual breakdown of points categories
 - **Regional Pool tab**: Improved season building with detailed progress tracking, enhanced table formatting with qualification status indicators, and summary statistics
+- **Event Statistics tab**: NEW! Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights
 
 ## Architecture
 
@@ -53,7 +54,8 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 - `Season`: Builds complete season view from FRC Events API, calculates regional pools using 2025+ rules
 - `frc_events.py`: Handles FRC Events API requests with automatic JSON caching under `cache/`
 - `statbotics.py`: Optional Statbotics EPA integration
-- `ui/streamlit_app.py`: Streamlit dashboard with three tabs and progress UI
+- `utils/event_stats.py`: NEW! Event statistical analysis with EPA integration and comprehensive metrics
+- `ui/streamlit_app.py`: Streamlit dashboard with four tabs and progress UI
 
 ### Points Calculation Systems
 The codebase implements two regional points systems:
@@ -85,6 +87,19 @@ Notes:
 - CLI shows spinners/progress bars for long operations
 - Streamlit shows: status updates for event analysis, a progress bar + live status text + recent codes for season builds
 - Programmatic API is silent unless progress callback provided
+
+## V2.3.1 Highlights
+- **Enhanced Progress UX**: Cleaner, less verbose progress indicators for Event Statistics tab with filtered messages showing only key milestones
+- **Better EPA Progress**: Shows percentage completion with reduced update frequency for improved performance
+- **Collapsed Status**: Progress status starts collapsed by default for less intrusive user experience
+- **Performance Optimizations**: Reduced DOM updates during EPA data fetching for smoother operation
+
+## V2.2.0 Highlights
+- **NEW Event Statistics Tab**: Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights
+- **EPA Integration**: Seamless Statbotics EPA data fetching with progress tracking and caching
+- **Advanced Analytics**: Qualification vs playoff score comparisons, match score distributions, and team performance metrics
+- **Enhanced Caching**: Improved cache management with separate EPA cache controls and better user feedback
+- **Performance Optimizations**: Better progress indicators for long-running operations and smarter data loading
 
 ## V2.1.0 Highlights
 - **Modernized UI/UX**: Complete Streamlit interface redesign with better visual hierarchy, emoji icons, and improved spacing

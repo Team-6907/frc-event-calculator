@@ -59,7 +59,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
-## Streamlit Dashboard (v2.1.0)
+## Streamlit Dashboard (v2.3.1)
 
 A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
@@ -81,6 +81,7 @@ streamlit run src/frc_calculator/ui/streamlit_app.py
 - **🏆 Event Analysis**: Smart event selection (dropdown + manual override), improved progress tracking, and formatted data tables with team info
 - **📊 Points Calculator**: Redesigned interface with better input validation, visual points breakdown, and comprehensive team performance metrics
 - **🏁 Regional Pool**: Enhanced season building with detailed progress tracking, qualification status indicators, and summary statistics
+- **📈 Event Statistics**: Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights
 
 ### UI Improvements:
 - Modern design with emoji icons and better visual hierarchy
@@ -149,6 +150,19 @@ Add your license here.
 - Ensure your `.env` is set and network is reachable on first run
 
 ## Changelog
+
+### v2.3.1 (Improved Progress UX)
+- **⚡ Enhanced Progress Display**: Cleaner, less verbose progress indicators for Event Statistics tab
+- **📊 Better EPA Progress**: Shows percentage completion with reduced update frequency for better performance
+- **🎯 Filtered Messages**: Only displays key milestones, removing unnecessary verbose output
+- **🔧 Collapsed Status**: Progress status starts collapsed by default for less intrusive experience
+
+### v2.2.0 (Event Statistics & Analysis)
+- **📈 New Event Statistics Tab**: Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights
+- **🤖 EPA Integration**: Seamless Statbotics EPA data fetching with progress tracking and caching
+- **📊 Advanced Analytics**: Qualification vs playoff score comparisons, match score distributions, and team performance metrics
+- **🔧 Enhanced Caching**: Improved cache management with separate EPA cache controls and better user feedback
+- **⚡ Performance Optimizations**: Better progress indicators for long-running operations and smarter data loading
 
 ### v2.1.0 (UI/UX Overhaul)
 - **🎨 Complete UI Redesign**: Modern interface with emoji icons, better visual hierarchy, and improved spacing
