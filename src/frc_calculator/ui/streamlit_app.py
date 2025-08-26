@@ -535,16 +535,16 @@ def render_regional_pool_tab() -> None:
 
         try:
             listings = request_event_listings(season_int)
-            total_events = sum(
-                len(listings.get(f"Week {w}", {}).get("Events", []))
-                for w in range(1, week_int + 1)
-            )
+            # Only count events for the requested week, not all weeks
+            total_events = len(listings.get(f"Week {week_int}", {}).get("Events", []))
         except Exception:
             total_events = 0
 
         if total_events <= 0:
             with st.spinner("🔄 Building season data (this may take a while)..."):
-                season_obj = Season(season_int, useSeason=use_season_int)
+                season_obj = Season(
+                    season_int, useSeason=use_season_int, max_week=week_int
+                )
         else:
             st.info(
                 f"📊 **Building {total_events} events through week {week_int}**\n\n"
@@ -579,7 +579,10 @@ def render_regional_pool_tab() -> None:
                     pass
 
             season_obj = Season(
-                season_int, useSeason=use_season_int, progress=on_event_built
+                season_int,
+                useSeason=use_season_int,
+                progress=on_event_built,
+                max_week=week_int,
             )
             progress_bar.progress(1.0)
             status_placeholder.success("✅ All events processed successfully!")

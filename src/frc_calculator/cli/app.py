@@ -7,7 +7,14 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 from rich.status import Status
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn, TimeRemainingColumn
+from rich.progress import (
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    BarColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
 from frc_calculator.models.event import Event
 from frc_calculator.services.season import Season
@@ -19,11 +26,13 @@ def cmd_analyze_event(args: argparse.Namespace) -> int:
         f"Fetching {args.season} {args.event}: teams, rankings, alliances, matches, awards...",
         spinner="dots",
     )
+
     def on_progress(msg: str):
         try:
             status.update(f"{msg} ...")
         except Exception:
             pass
+
     with status:
         event = Event(args.season, args.event, progress=on_progress)
     console = Console()
@@ -57,16 +66,24 @@ def cmd_regional_pool(args: argparse.Namespace) -> int:
     # Pre-count events to display a progress bar (listing is cheap; building events is the heavy part)
     try:
         from frc_calculator.data.frc_events import request_event_listings
+
         listings = request_event_listings(args.season)
-        total_events = sum(len(listings[f"Week {w}"]["Events"]) for w in [1,2,3,4,5,6])
+        # Only count events up to the requested week
+        total_events = sum(
+            len(listings[f"Week {w}"]["Events"]) for w in range(1, args.week + 1)
+        )
     except Exception:
         total_events = 0
 
     def build_season_with_progress():
         if total_events <= 0:
             # Fallback to simple spinner
-            with console.status("Building season (this may take a while)...", spinner="dots"):
-                return Season(args.season, useSeason=args.use_season)
+            with console.status(
+                "Building season (this may take a while)...", spinner="dots"
+            ):
+                return Season(
+                    args.season, useSeason=args.use_season, max_week=args.week
+                )
         else:
             with Progress(
                 SpinnerColumn(),
@@ -78,12 +95,19 @@ def cmd_regional_pool(args: argparse.Namespace) -> int:
                 console=console,
             ) as progress:
                 task = progress.add_task("build", total=total_events)
+
                 def on_event_built(_event_code: str):
                     try:
                         progress.advance(task)
                     except Exception:
                         pass
-                return Season(args.season, useSeason=args.use_season, progress=on_event_built)
+
+                return Season(
+                    args.season,
+                    useSeason=args.use_season,
+                    progress=on_event_built,
+                    max_week=args.week,
+                )
 
     season = build_season_with_progress()
     pool = season.regional_pool_2025(weekNumber=args.week)
@@ -98,7 +122,9 @@ def cmd_regional_pool(args: argparse.Namespace) -> int:
         print(json.dumps(serial, indent=2))
     else:
         console = Console()
-        table = Table(title=f"Regional Pool week {args.week} (useSeason={args.use_season})")
+        table = Table(
+            title=f"Regional Pool week {args.week} (useSeason={args.use_season})"
+        )
         table.add_column("Rank")
         table.add_column("Team")
         table.add_column("Points")

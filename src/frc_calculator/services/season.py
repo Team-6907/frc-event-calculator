@@ -7,10 +7,11 @@ from frc_calculator.config.constants import get_constants
 
 
 class Season:
-    def __init__(self, season: int, useSeason: int, *, progress=None):
+    def __init__(self, season: int, useSeason: int, *, progress=None, max_week=None):
         self.season = season
         self.useSeason = useSeason
         self.allowBackfillIn2026 = True
+        self.max_week = max_week
 
         self.seasonTeams = {}
         self.events = {}
@@ -21,7 +22,12 @@ class Season:
 
     def find_season_events(self):
         seasonData = request_event_listings(self.season)
-        for weekNumber in [1, 2, 3, 4, 5, 6]:
+        # Only process events up to the requested week if specified
+        weeks_to_process = [1, 2, 3, 4, 5, 6]
+        if self.max_week is not None:
+            weeks_to_process = [w for w in weeks_to_process if w <= self.max_week]
+
+        for weekNumber in weeks_to_process:
             weekStr = f"Week {weekNumber}"
             for eventData in seasonData[weekStr]["Events"]:
                 self.register_event(weekNumber, eventData["code"])
@@ -138,7 +144,9 @@ class Season:
 
         succession = 1
         Const = get_constants(self.useSeason)
-        while poolCount < Const.weeklySlots()[weekNumber - 2] and succession <= len(regionalPool):
+        while poolCount < Const.weeklySlots()[weekNumber - 2] and succession <= len(
+            regionalPool
+        ):
             mSeasonTeam = regionalPool[succession]["team"]
             if not mSeasonTeam.isQualified:
                 if not mSeasonTeam.isDeclined:

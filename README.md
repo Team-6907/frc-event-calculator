@@ -59,7 +59,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
-## Streamlit Dashboard (v2.4.1)
+## Streamlit Dashboard (v2.4.2)
 
 A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
@@ -152,7 +152,10 @@ Add your license here.
 
 ## Changelog
 
-### v2.4.1 (Colorblind-Friendly Event Radar)
+### v2.4.2 (Progress Tracking Bug Fix)
+- **🐛 Bug Fix**: Fixed progress tracking discrepancy in Regional Pool (was showing "20/7 events", now correctly shows "7/7 events")
+- **📊 Accurate Event Counting**: Progress bar now only counts events for the requested week, not all weeks
+- **⚡ Performance Improvement**: Season building now only processes events up to the requested week
 - **📡 NEW Event Radar Tab**: 8-dimensional radar chart analysis with interactive Plotly visualization
 - **🎨 Colorblind-Friendly Design**: High contrast, colorblind-safe color palette for better accessibility
 - **📊 Radar Chart Dimensions**: Overall competitiveness, ranking point difficulty, non-playoff team strength (TANK), returning team strength (HOME), veteran team count (REIGN), playoff competitiveness (Title), and finals performance (CHAMP)

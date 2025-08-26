@@ -15,7 +15,7 @@ pip install -r requirements.txt
 # Run tests
 python Test.py
 
-# Run Streamlit dashboard (V2.4.1)
+# Run Streamlit dashboard (V2.4.2)
 streamlit run src/frc_calculator/ui/streamlit_app.py
 ```
 
@@ -33,7 +33,7 @@ frc-calculator regional-pool 2025 --week 6 --top 50
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
-### Streamlit (V2.4.1) UX
+### Streamlit (V2.4.2) UX
 - **Credentials Setup**: Moved to main interface with inline validation, better error messaging, and clear status indicators
 - **Analyze Event tab**: Enhanced form layout with smart event selection (dropdown + manual override), improved progress tracking, and better data visualization with formatted tables
 - **Calculate Points tab**: Redesigned calculator with better input validation, enhanced results display with team info and visual breakdown of points categories
@@ -89,7 +89,10 @@ Notes:
 - Streamlit shows: status updates for event analysis, a progress bar + live status text + recent codes for season builds
 - Programmatic API is silent unless progress callback provided
 
-## V2.4.1 Highlights
+## V2.4.2 Highlights
+- **Bug Fix**: Fixed progress tracking discrepancy in Regional Pool (was showing "20/7 events", now correctly shows "7/7 events")
+- **Accurate Event Counting**: Progress bar now only counts events for the requested week, not all weeks
+- **Performance Improvement**: Season building now only processes events up to the requested week
 - **NEW Event Radar Tab**: 8-dimensional radar chart analysis with interactive Plotly visualization
 - **Colorblind-Friendly Design**: High contrast, colorblind-safe color palette for better accessibility
 - **Radar Chart Dimensions**: Overall competitiveness, ranking point difficulty, non-playoff team strength (TANK), returning team strength (HOME), veteran team count (REIGN), playoff competitiveness (Title), and finals performance (CHAMP)
