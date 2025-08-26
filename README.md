@@ -9,7 +9,7 @@ Analyzer and points calculator for FRC (FIRST Robotics Competition) events. Impl
 - Event analysis: teams, rankings, alliances, matches, awards
 - 2025+ regional points: qualification, alliance selection, playoff advancement, awards, rookie bonuses
 - Regional pool: weekly auto-advancement + slot fill rules (2025); top‑3 per event with backfill option (2026)
-- Caching: automatic JSON caching of FRC Events API responses under `data/`
+- Caching: automatic JSON caching of FRC Events API responses under `cache/`
 - Progress: spinners and progress bars for long fetches in CLI
 - Statbotics EPA: optional per-event EPA retrieval
 - CLI and API: human‑readable tables and JSON output
@@ -57,7 +57,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
 Notes:
-- `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `data/`.
+- `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
 ## Streamlit Dashboard (v2.1.0)
 
@@ -108,9 +108,9 @@ print(list(pool_w6.items())[:5])
 
 ## Caching & Data
 
-- Cache files live under `data/` (auto‑created) and mirror FRC Events API responses.
+- Cache files live under `cache/` (auto‑created) and mirror FRC Events API responses.
 - Re‑runs prefer cache unless a missing section is needed.
-- You can safely delete `data/` to force re‑fetch.
+- You can safely delete `cache/` to force re‑fetch.
 
 ## Project Structure
 
@@ -137,7 +137,7 @@ python Test.py
 
 Hints:
 - The CLI shows progress spinners/bars; programmatic API is silent unless you pass a progress callback.
-- Tests currently rely on live FRC Events API (or local cache). If you want deterministic tests, record responses into `data/` first.
+- Tests currently rely on live FRC Events API (or local cache). If you want deterministic tests, record responses into `cache/` first.
 
 ## License
 

@@ -91,7 +91,7 @@ def get_event_options(season: int) -> list[tuple[str, str]]:
     """
     # If credentials missing, try to load cached listings file directly; else call API
     if not (os.getenv("AUTH_USERNAME") and os.getenv("AUTH_TOKEN")):
-        cached = load_json_data(f"data/{season}EventListings.json")
+        cached = load_json_data(f"cache/{season}EventListings.json")
         if not cached:
             return []
         listings = cached

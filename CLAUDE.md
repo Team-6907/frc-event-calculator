@@ -51,7 +51,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 
 ### Key Services
 - `Season`: Builds complete season view from FRC Events API, calculates regional pools using 2025+ rules
-- `frc_events.py`: Handles FRC Events API requests with automatic JSON caching under `data/`
+- `frc_events.py`: Handles FRC Events API requests with automatic JSON caching under `cache/`
 - `statbotics.py`: Optional Statbotics EPA integration
 - `ui/streamlit_app.py`: Streamlit dashboard with three tabs and progress UI
 
@@ -68,7 +68,7 @@ The codebase implements two regional points systems:
 ### Data Flow
 1. CLI commands trigger Event or Season creation
 2. Data fetched from FRC Events API (with progress indicators)
-3. Responses cached as JSON files under `data/` directory
+3. Responses cached as JSON files under `cache/` directory
 4. Models parse cached data and calculate points/rankings
 5. Results displayed via Rich console tables, Streamlit tables, or JSON output
 
@@ -79,7 +79,7 @@ The codebase implements two regional points systems:
 
 Notes:
 - Invalid credentials are surfaced clearly in the UI; listings/requests will not silently appear empty.
-- Without credentials, only locally cached data in `data/` is used.
+- Without credentials, only locally cached data in `cache/` is used.
 
 ### Progress System
 - CLI shows spinners/progress bars for long operations
@@ -94,6 +94,6 @@ Notes:
 - **Enhanced Error Handling**: Expandable error details, contextual help, and actionable guidance messages
 
 ## Testing Notes
-- Tests in `Test.py` use live FRC Events API data or cached responses from `data/` directory
+- Tests in `Test.py` use live FRC Events API data or cached responses from `cache/` directory
 - Tests verify core functionality: event parsing, team rankings, alliance structure, matches, awards, and points calculations
-- For consistent test results, ensure API credentials are configured or that relevant cache files exist in `data/`
+- For consistent test results, ensure API credentials are configured or that relevant cache files exist in `cache/`
