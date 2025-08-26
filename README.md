@@ -59,7 +59,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
-## Streamlit Dashboard (v2.6.0)
+## Streamlit Dashboard (v2.6.1)
 
 A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
@@ -156,6 +156,12 @@ Add your license here.
 - Ensure your `.env` is set and network is reachable on first run
 
 ## Changelog
+
+### v2.6.1 (Settings Dialog + Status Bar)
+- **⚙️ Settings Dialog**: Moved credentials and cache controls into a modal dialog; reduces clutter and follows progressive disclosure best practice
+- **🧭 Compact Status Bar**: Shows API status (Live/Cache) and current Season/Event with a single Settings entry point
+- **✅ Validation UX**: Single “Validate” button (no wrap) with silent auto-fetch of event listings and concise success messaging
+- **🖼️ Layout Polish**: Wider dialog to prevent cramped form fields; minor copy tweaks
 
 ### v2.6.0 (Scope-Aware Context Bar + Team Dropdown)
 - **🧭 Global Context Bar**: Unified season/event selectors across tabs with scope awareness (event vs season) and URL deep-linking

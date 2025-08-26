@@ -15,7 +15,7 @@ pip install -r requirements.txt
 # Run tests
 python Test.py
 
-# Run Streamlit dashboard (V2.6.0)
+# Run Streamlit dashboard (V2.6.1)
 streamlit run src/frc_calculator/ui/streamlit_app.py
 ```
 
@@ -33,13 +33,14 @@ frc-calculator regional-pool 2025 --week 6 --top 50
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
-### Streamlit (V2.6.0) UX
+### Streamlit (V2.6.1) UX
 - **Global Context Bar (scope-aware)**: Single persistent bar for Season/Event on event-scoped tabs, and Season/Rules/Week on Regional Pool; selections persist across tabs and sync to URL query params
 - **Analyze Event tab**: Uses the context bar for season/event, retains improved progress and tables
 - **Calculate Points tab**: Uses the context bar for season/event; Team input is now a dropdown populated from the selected event (falls back to manual input if data unavailable)
 - **Regional Pool tab**: Season/Rules/Week moved to the context bar with detailed progress tracking and better summaries
 - **Event Statistics tab**: Uses the context bar for season/event; retains EPA integration and analytics
 - **Event Radar tab**: Multi-event comparison remains specialized (unchanged)
+ - **Settings Dialog**: Credentials and cache controls moved into a modal; compact status bar replaces always-on controls
 
 ## Architecture
 
@@ -90,6 +91,11 @@ Notes:
 - CLI shows spinners/progress bars for long operations
 - Streamlit shows: status updates for event analysis, a progress bar + live status text + recent codes for season builds
 - Programmatic API is silent unless progress callback provided
+
+## V2.6.1 Highlights
+- **Settings Dialog + Status Bar**: Consolidated credentials & cache management; smaller surface area, better flow
+- **Silent Validation**: Validate action fetches listings quietly and confirms success succinctly
+- **Dialog Width**: Increased modal width to reduce form clutter
 
 ## V2.6.0 Highlights
 - **Scope-Aware Context Bar**: Unified selection experience across tabs with URL deep-linking

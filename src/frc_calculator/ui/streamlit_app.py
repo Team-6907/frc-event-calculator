@@ -48,8 +48,11 @@ if "last_fetch_time" not in st.session_state:
     st.session_state.last_fetch_time = None
 
 
-def auto_fetch_event_listings() -> None:
-    """Automatically fetch event listings for 2023, 2024, and 2025 seasons if credentials are available."""
+def auto_fetch_event_listings(*, silent: bool = False) -> None:
+    """Automatically fetch event listings for 2023, 2024, and 2025 seasons if credentials are available.
+
+    If silent=True, performs fetching without UI status/toasts or reruns.
+    """
     if not (os.getenv("AUTH_USERNAME") and os.getenv("AUTH_TOKEN")):
         return
 
@@ -63,7 +66,21 @@ def auto_fetch_event_listings() -> None:
     if not seasons_to_fetch:
         return
 
-    # Show status for auto-fetching
+    if silent:
+        for season in seasons_to_fetch:
+            try:
+                request_event_listings(season)
+            except Exception:
+                continue
+        try:
+            get_event_options.clear()
+        except Exception:
+            pass
+        st.session_state.event_listings_loaded = True
+        st.session_state.last_fetch_time = pd.Timestamp.now()
+        return
+
+    # Show status for auto-fetching (non-silent)
     with st.status("🚀 Auto-fetching event listings...", expanded=False) as status:
         for season in seasons_to_fetch:
             try:
@@ -94,22 +111,23 @@ def auto_fetch_event_listings() -> None:
         st.rerun()
 
 
-def render_credentials_setup() -> bool:
-    """Render credentials setup in main area with better UX"""
-    st.markdown("### 🔐 FRC Events API Setup")
-    st.markdown(
-        "Enter your FRC Events API credentials to access live data. Without them, only cached data will be available."
+def _render_credentials_and_cache_controls() -> None:
+    """Render credentials and cache tools (for use inside Settings dialog)."""
+    st.markdown("#### 🔐 FRC Events API Setup")
+    st.caption(
+        "Enter your API credentials to access live data. Without them, only cached data is used."
     )
 
-    col1, col2, col3 = st.columns([2, 2, 1])
+    col1, col2, col3 = st.columns([2, 2, 1.6])
 
     with col1:
         default_user = os.getenv("AUTH_USERNAME", "")
         username = st.text_input(
             "Username",
             value=default_user,
-            placeholder="Enter your FRC Events API username",
+            placeholder="FRC Events API username",
             help="Your FRC Events API username",
+            key="settings_username",
         )
 
     with col2:
@@ -118,56 +136,123 @@ def render_credentials_setup() -> bool:
             "Auth Token",
             value=default_token,
             type="password",
-            placeholder="Enter your auth token",
+            placeholder="FRC Events API token",
             help="Your FRC Events API authorization token",
+            key="settings_token",
         )
 
     with col3:
-        st.markdown("<br>", unsafe_allow_html=True)  # Add spacing
-        if username and token:
-            if st.button("✓ Validate", type="primary", use_container_width=True):
-                with st.spinner("Validating credentials..."):
-                    try:
-                        request_event_listings(2024)
-                        st.success("✓ Credentials validated successfully!")
-                        # Auto-fetch event listings after successful validation
-                        auto_fetch_event_listings()
-                        return True
-                    except AuthError:
-                        st.error("❌ Invalid credentials. Please check and try again.")
-                        return False
-                    except Exception as e:
-                        st.warning(f"⚠️ Validation failed: {str(e)}")
-                        return False
-        else:
-            st.button("✓ Validate", disabled=True, use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        validate_disabled = not (username and token)
+        if st.button("Validate", type="primary", use_container_width=True, disabled=validate_disabled, key="settings_validate"):
+            with st.spinner("Validating credentials and loading listings..."):
+                try:
+                    os.environ["AUTH_USERNAME"] = username
+                    os.environ["AUTH_TOKEN"] = token
+                    request_event_listings(2024)
+                    auto_fetch_event_listings(silent=True)
+                    st.success("Credentials validated. Event listings refreshed.")
+                except AuthError:
+                    st.error("❌ Invalid credentials. Please check and try again.")
+                except Exception as e:
+                    st.warning(f"⚠️ Validation failed: {str(e)}")
 
-    # Set environment variables immediately when user inputs credentials
-    if username and token:
-        os.environ["AUTH_USERNAME"] = username
-        os.environ["AUTH_TOKEN"] = token
-        # Try to auto-fetch event listings if credentials look valid
-        if len(username) > 0 and len(token) > 0:
-            auto_fetch_event_listings()
+    st.divider()
 
-    # Additional actions
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔄 Clear Event Cache", help="Clear cached event listings"):
+    st.markdown("#### 🧹 Cache Management")
+    c1, c2, c3 = st.columns(3)
+
+    def _delete_file_silent(path: str) -> None:
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
+
+    with c1:
+        if st.button("🔄 Clear Event Listings", help="Delete cached event listings files", key="clear_event_listings"):
             try:
+                # Clear get_event_options cache and delete listings files
                 get_event_options.clear()
-                st.toast("✓ Event listings cache cleared", icon="🔄")
-            except Exception:
-                pass
+                cache_dir = "cache"
+                if os.path.isdir(cache_dir):
+                    for fname in os.listdir(cache_dir):
+                        if fname.endswith("EventListings.json"):
+                            _delete_file_silent(os.path.join(cache_dir, fname))
+                st.success("Event listings cache cleared")
+            except Exception as e:
+                st.warning(f"Could not clear listings cache: {e}")
 
+    with c2:
+        if st.button("🗑️ Clear Current Event", help="Delete cache for the currently selected event", key="clear_current_event"):
+            try:
+                season = st.session_state.get("ctx_season")
+                event = st.session_state.get("ctx_event")
+                if season and event:
+                    _delete_file_silent(data_filename(int(season), str(event)))
+                    st.success(f"Cleared cache for {season} {event}")
+                else:
+                    st.info("No current event selected")
+            except Exception as e:
+                st.warning(f"Could not clear event cache: {e}")
+
+    with c3:
+        if st.button("🤖 Clear EPA Cache", help="Remove EPA data from cached event files", key="clear_epa_cache"):
+            try:
+                cache_dir = "cache"
+                cleared = 0
+                if os.path.isdir(cache_dir):
+                    for fname in os.listdir(cache_dir):
+                        if fname.endswith(".json") and "EventListings" not in fname:
+                            fpath = os.path.join(cache_dir, fname)
+                            try:
+                                from frc_calculator.utils.io_utils import load_json_data, write_json_data
+                                data = load_json_data(fpath)
+                                if data and "EPAData" in data:
+                                    data.pop("EPAData", None)
+                                    write_json_data(data, fpath)
+                                    cleared += 1
+                            except Exception:
+                                continue
+                st.success(f"Cleared EPA data from {cleared} cache file(s)")
+            except Exception as e:
+                st.warning(f"Could not clear EPA cache: {e}")
+
+
+@st.dialog("⚙️ Settings")
+def _settings_dialog():
+    # Widen dialog to reduce clutter on forms
+    try:
+        st.markdown(
+            """
+            <style>
+            /* Increase the width of Streamlit dialog */
+            div[data-testid="stDialog"] > div {width: 92vw; max-width: 1100px;}
+            div[data-testid="stDialog"] section {width: 92vw; max-width: 1100px;}
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+    except Exception:
+        pass
+    _render_credentials_and_cache_controls()
+    st.markdown("")
+    st.caption("Close this dialog to return to the app.")
+
+
+def render_top_status_bar() -> None:
+    """Compact status + Settings entry, replaces always-on credentials section."""
+    live = bool(os.getenv("AUTH_USERNAME") and os.getenv("AUTH_TOKEN"))
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        st.markdown(
+            f"**API Status:** {'🟢 Live' if live else '🟡 Cache-only'}  |  "
+            f"Season: {st.session_state.get('ctx_season', '—')}  "
+            f"Event: {st.session_state.get('ctx_event', '—')}  "
+        )
     with col2:
-        if st.button("🤖 Clear EPA Cache", help="Clear cached EPA data"):
-            st.toast(
-                "💡 EPA data is cached in cache/{season}-{event}.json files", icon="🤖"
-            )
-
-    st.markdown("---")
-    return bool(username and token)
+        if st.button("⚙️ Settings", use_container_width=True):
+            _settings_dialog()
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
@@ -1135,8 +1220,8 @@ def main() -> None:
         "**The complete toolkit for FRC event analysis and championship qualification tracking**"
     )
 
-    # Credentials setup with better UX
-    render_credentials_setup()
+    # Compact status + settings dialog entry
+    render_top_status_bar()
 
     # Main application tabs
     tab1, tab2, tab3, tab4, tab5 = st.tabs(
