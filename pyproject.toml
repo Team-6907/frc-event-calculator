@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "frc-event-calculator"
-version = "2.4.2"
+version = "2.4.3"
 description = "Analyzer and points calculator for FRC events (2025+ rules)"
 authors = [{ name = "FRC Event Calculator" }]
 requires-python = ">=3.10"

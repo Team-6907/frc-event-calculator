@@ -152,6 +152,13 @@ Add your license here.
 
 ## Changelog
 
+### v2.4.3 (Auto-Fetch Event Listings)
+- **🚀 NEW Auto-Fetch Feature**: Automatically fetches 2023, 2024, and 2025 event listings on app startup when credentials are provided
+- **⚡ Improved Startup Experience**: Eliminates "No events loaded" message by pre-loading event data automatically
+- **🔄 Smart Cache Management**: Intelligent cache invalidation and UI refresh after event listings are loaded
+- **📱 Better User Experience**: No more need to manually restart the app after entering credentials
+- **🔧 Session State Management**: Enhanced state management for seamless event data loading and UI updates
+
 ### v2.4.2 (Progress Tracking Bug Fix)
 - **🐛 Bug Fix**: Fixed progress tracking discrepancy in Regional Pool (was showing "20/7 events", now correctly shows "7/7 events")
 - **📊 Accurate Event Counting**: Progress bar now only counts events for the requested week, not all weeks
