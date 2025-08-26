@@ -1,5 +1,6 @@
-from Alliance import AnonymousAlliance, Alliance
-from Team import Team
+from __future__ import annotations
+
+from frc_calculator.models.alliance import AnonymousAlliance, Alliance
 
 
 class Match:
@@ -13,11 +14,9 @@ class Match:
         self.redScore = []  # waiting for the event to assign
         self.blueScore = []
         if tournamentLevel == "qualification":
-            # this is assigned after scheduled
             self.redAlliance = AnonymousAlliance(event)
             self.blueAlliance = AnonymousAlliance(event)
         if tournamentLevel == "playoff":
-            # this is assigned before scheduled
             self.redAlliance = None
             self.blueAlliance = None
 
@@ -51,10 +50,8 @@ class Match:
     def __repr__(self):
         return self.__str__()
 
-    def register_team(self, mTeam: Team, red: bool, disqualified: bool):
-        if (
-            self.tournamentLevel == "qualification"
-        ):  # only quals should assign teams to alliance
+    def register_team(self, mTeam, red: bool, disqualified: bool):
+        if self.tournamentLevel == "qualification":
             mTeam.qualsMatches.append(self)
             if red:
                 self.redAlliance.register_team(mTeam)
@@ -73,7 +70,7 @@ class Match:
                 self.blueAlliance = mAlliance
             mAlliance.playoffMatches.append(self)
 
-    def result_query(self, mTeam: Team):
+    def result_query(self, mTeam):
         if self.redAlliance.is_member(mTeam):
             red = True
         elif self.blueAlliance.is_member(mTeam):
@@ -111,3 +108,4 @@ class Match:
         elif self.blueAlliance.is_member(mTeam):
             return self.blueScore[0]
         return 0
+

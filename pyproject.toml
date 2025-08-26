@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "frc-event-calculator"
+version = "1.0.0"
+description = "Analyzer and points calculator for FRC events (2025+ rules)"
+authors = [{ name = "FRC Event Calculator" }]
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.32.4",
+    "python-dotenv>=1.1.1",
+    "rich>=14.1.0",
+    "statbotics>=2.0.0",
+]
+
+[project.scripts]
+frc-calculator = "frc_calculator.cli.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests*"]
