@@ -29,6 +29,58 @@ st.set_page_config(
     page_title="FRC Event Calculator", layout="wide", initial_sidebar_state="collapsed"
 )
 
+# Initialize session state for event listings
+if "event_listings_loaded" not in st.session_state:
+    st.session_state.event_listings_loaded = False
+if "last_fetch_time" not in st.session_state:
+    st.session_state.last_fetch_time = None
+
+
+def auto_fetch_event_listings() -> None:
+    """Automatically fetch event listings for 2023, 2024, and 2025 seasons if credentials are available."""
+    if not (os.getenv("AUTH_USERNAME") and os.getenv("AUTH_TOKEN")):
+        return
+
+    # Check if we need to fetch any event listings
+    seasons_to_fetch = []
+    for season in [2023, 2024, 2025]:
+        cache_file = f"cache/{season}EventListings.json"
+        if not os.path.exists(cache_file) or os.path.getsize(cache_file) == 0:
+            seasons_to_fetch.append(season)
+
+    if not seasons_to_fetch:
+        return
+
+    # Show status for auto-fetching
+    with st.status("🚀 Auto-fetching event listings...", expanded=False) as status:
+        for season in seasons_to_fetch:
+            try:
+                status.write(f"📥 Fetching {season} event listings...")
+                request_event_listings(season)
+                status.write(f"✅ {season} event listings loaded successfully!")
+            except AuthError:
+                status.write(f"❌ Authentication failed for {season}")
+                break
+            except Exception as e:
+                status.write(f"⚠️ Error fetching {season}: {str(e)}")
+                continue
+
+        status.update(label="✅ Event listings auto-fetch completed!", state="complete")
+
+        # Clear the get_event_options cache to force refresh
+        try:
+            get_event_options.clear()
+            st.toast("🔄 Event options cache refreshed!", icon="🔄")
+        except Exception:
+            pass
+
+        # Update session state to trigger UI refresh
+        st.session_state.event_listings_loaded = True
+        st.session_state.last_fetch_time = pd.Timestamp.now()
+
+        # Force a rerun to refresh the UI
+        st.rerun()
+
 
 def render_credentials_setup() -> bool:
     """Render credentials setup in main area with better UX"""
@@ -66,6 +118,8 @@ def render_credentials_setup() -> bool:
                     try:
                         request_event_listings(2024)
                         st.success("✓ Credentials validated successfully!")
+                        # Auto-fetch event listings after successful validation
+                        auto_fetch_event_listings()
                         return True
                     except AuthError:
                         st.error("❌ Invalid credentials. Please check and try again.")
@@ -76,9 +130,13 @@ def render_credentials_setup() -> bool:
         else:
             st.button("✓ Validate", disabled=True, use_container_width=True)
 
-    # Set environment variables
-    os.environ["AUTH_USERNAME"] = username
-    os.environ["AUTH_TOKEN"] = token
+    # Set environment variables immediately when user inputs credentials
+    if username and token:
+        os.environ["AUTH_USERNAME"] = username
+        os.environ["AUTH_TOKEN"] = token
+        # Try to auto-fetch event listings if credentials look valid
+        if len(username) > 0 and len(token) > 0:
+            auto_fetch_event_listings()
 
     # Additional actions
     col1, col2 = st.columns(2)
@@ -108,8 +166,20 @@ def get_event_options(season: int) -> list[tuple[str, str]]:
     # Ensure season is an integer
     season = int(season)
 
+    # Add session state dependency to force cache invalidation
+    _ = st.session_state.get("event_listings_loaded", False)
+    _ = st.session_state.get("last_fetch_time", None)
+
+    # Check if credentials are available (either from environment or session state)
+    has_credentials = bool(os.getenv("AUTH_USERNAME") and os.getenv("AUTH_TOKEN"))
+
+    # Debug logging
+    print(
+        f"get_event_options called for season {season}, has_credentials: {has_credentials}"
+    )
+
     # If credentials missing, try to load cached listings file directly; else call API
-    if not (os.getenv("AUTH_USERNAME") and os.getenv("AUTH_TOKEN")):
+    if not has_credentials:
         cache_file = f"cache/{season}EventListings.json"
         cached = load_json_data(cache_file)
         if not cached:
@@ -117,12 +187,16 @@ def get_event_options(season: int) -> list[tuple[str, str]]:
             print(f"Cache file not found: {cache_file}")
             return []
         listings = cached
+        print(f"Loaded {season} from cache, found {len(listings)} weeks")
     else:
         try:
             listings = request_event_listings(season)
+            print(f"Loaded {season} from API, found {len(listings)} weeks")
         except AuthError:
+            print(f"Auth error for {season}")
             return []
-        except Exception:
+        except Exception as e:
+            print(f"API error for {season}: {e}")
             return []
 
     options: list[tuple[str, str]] = []
@@ -136,6 +210,9 @@ def get_event_options(season: int) -> list[tuple[str, str]]:
             name = e.get("name") or e.get("nameShort") or code
             label = f"{name} {season} [{code}]"
             options.append((label, code))
+
+    print(f"Generated {len(options)} options for season {season}")
+
     # de-duplicate while preserving order
     seen = set()
     uniq: list[tuple[str, str]] = []
@@ -144,6 +221,8 @@ def get_event_options(season: int) -> list[tuple[str, str]]:
             continue
         seen.add(code)
         uniq.append((label, code))
+
+    print(f"Final {len(uniq)} unique options for season {season}")
     return uniq
 
 
