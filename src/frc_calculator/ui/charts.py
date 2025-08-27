@@ -31,24 +31,31 @@ def render_radar_chart_visualization(
     max_value = max(values) if values else 20
     scale_max = max(20, max_value * 1.2)
 
+    # Detect theme using st.context.theme.type
+    is_dark_theme = st.context.theme.type == "dark"
+    
+    text_color = "white" if is_dark_theme else "black"
+    grid_color = "rgba(255, 255, 255, 0.6)" if is_dark_theme else "rgba(128, 128, 128, 0.6)"
+    line_color = "rgba(255, 255, 255, 0.8)" if is_dark_theme else "rgba(128, 128, 128, 0.8)"
+
     fig.update_layout(
         polar=dict(
             radialaxis=dict(
                 visible=True,
                 range=[0, scale_max],
-                gridcolor="rgba(255, 255, 255, 0.6)",
-                tickfont=dict(size=10, color="white"),
-                linecolor="rgba(255, 255, 255, 0.8)",
+                gridcolor=grid_color,
+                tickfont=dict(size=10, color=text_color),
+                linecolor=line_color,
             ),
             angularaxis=dict(
-                tickfont=dict(size=12, color="white"),
-                linecolor="rgba(255, 255, 255, 0.8)",
+                tickfont=dict(size=12, color=text_color),
+                linecolor=line_color,
             ),
             bgcolor="rgba(0,0,0,0)",
         ),
         showlegend=True,
-        title=dict(text=f"Event Performance Radar - {event_code} {season}", x=0.5, font=dict(size=16)),
-        font=dict(color="white"),
+        title=dict(text=f"Event Performance Radar - {event_code} {season}", x=0.5, font=dict(size=16, color=text_color)),
+        font=dict(color=text_color),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         height=500,
@@ -132,24 +139,31 @@ def render_radar_chart_comparison(
     max_value = max(all_values) if all_values else 20
     scale_max = max(20, max_value * 1.2)
 
+    # Detect theme using st.context.theme.type
+    is_dark_theme = st.context.theme.type == "dark"
+    
+    text_color = "white" if is_dark_theme else "black"
+    grid_color = "rgba(255, 255, 255, 0.6)" if is_dark_theme else "rgba(128, 128, 128, 0.6)"
+    line_color = "rgba(255, 255, 255, 0.8)" if is_dark_theme else "rgba(128, 128, 128, 0.8)"
+
     fig.update_layout(
         polar=dict(
             radialaxis=dict(
                 visible=True,
                 range=[0, scale_max],
-                gridcolor="rgba(255, 255, 255, 0.6)",
-                tickfont=dict(size=10, color="white"),
-                linecolor="rgba(255, 255, 255, 0.8)",
+                gridcolor=grid_color,
+                tickfont=dict(size=10, color=text_color),
+                linecolor=line_color,
             ),
             angularaxis=dict(
-                tickfont=dict(size=12, color="white"),
-                linecolor="rgba(255, 255, 255, 0.8)",
+                tickfont=dict(size=12, color=text_color),
+                linecolor=line_color,
             ),
             bgcolor="rgba(0,0,0,0)",
         ),
         showlegend=True,
-        title=dict(text=f"Event Performance Radar Comparison - {season} Season", x=0.5, font=dict(size=16)),
-        font=dict(color="white"),
+        title=dict(text=f"Event Performance Radar Comparison - {season} Season", x=0.5, font=dict(size=16, color=text_color)),
+        font=dict(color=text_color),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         height=500,

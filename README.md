@@ -59,7 +59,7 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
-## Streamlit Dashboard (v2.6.1)
+## Streamlit Dashboard (v2.6.2)
 
 A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
@@ -156,6 +156,11 @@ Add your license here.
 - Ensure your `.env` is set and network is reachable on first run
 
 ## Changelog
+
+### v2.6.2 (Radar Chart Theme Fix)
+- **🐛 Hotfix**: Fixed radar chart text visibility in light theme by implementing proper theme detection using `st.context.theme.type`
+- **🎨 Theme Compatibility**: Radar charts now use appropriate text colors (white for dark theme, black for light theme) and grid colors
+- **🔄 Note**: Users need to refresh the page after changing themes due to Streamlit's theme detection limitations
 
 ### v2.6.1 (Settings Dialog + Status Bar)
 - **⚙️ Settings Dialog**: Moved credentials and cache controls into a modal dialog; reduces clutter and follows progressive disclosure best practice

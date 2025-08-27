@@ -15,7 +15,7 @@ pip install -r requirements.txt
 # Run tests
 python Test.py
 
-# Run Streamlit dashboard (V2.6.1)
+# Run Streamlit dashboard (V2.6.2)
 streamlit run src/frc_calculator/ui/streamlit_app.py
 ```
 
@@ -33,7 +33,7 @@ frc-calculator regional-pool 2025 --week 6 --top 50
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
-### Streamlit (V2.6.1) UX
+### Streamlit (V2.6.2) UX
 - **Global Context Bar (scope-aware)**: Single persistent bar for Season/Event on event-scoped tabs, and Season/Rules/Week on Regional Pool; selections persist across tabs and sync to URL query params
 - **Analyze Event tab**: Uses the context bar for season/event, retains improved progress and tables
 - **Calculate Points tab**: Uses the context bar for season/event; Team input is now a dropdown populated from the selected event (falls back to manual input if data unavailable)
@@ -91,6 +91,11 @@ Notes:
 - CLI shows spinners/progress bars for long operations
 - Streamlit shows: status updates for event analysis, a progress bar + live status text + recent codes for season builds
 - Programmatic API is silent unless progress callback provided
+
+## V2.6.2 Highlights
+- **Radar Chart Theme Fix**: Fixed radar chart text visibility in light theme using proper `st.context.theme.type` detection
+- **Theme Compatibility**: Charts now use appropriate colors for both dark and light themes
+- **Note**: Users need to refresh after changing themes due to Streamlit limitations
 
 ## V2.6.1 Highlights
 - **Settings Dialog + Status Bar**: Consolidated credentials & cache management; smaller surface area, better flow

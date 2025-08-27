@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "frc-event-calculator"
-version = "2.6.1"
-description = "Analyzer and points calculator for FRC events (2025+ rules) with a streamlined Streamlit dashboard and deep-linkable context bar"
+version = "2.6.2"
+description = "Analyzer and points calculator for FRC events (2025+ rules) with a streamlined Streamlit dashboard and theme-compatible radar charts"
 authors = [{ name = "FRC Event Calculator" }]
 requires-python = ">=3.10"
 dependencies = [
