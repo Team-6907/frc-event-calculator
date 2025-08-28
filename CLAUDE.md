@@ -15,7 +15,7 @@ pip install -r requirements.txt
 # Run tests
 python Test.py
 
-# Run Streamlit dashboard (V2.6.2)
+# Run Streamlit dashboard (V2.7.0)
 streamlit run src/frc_calculator/ui/streamlit_app.py
 ```
 
@@ -33,11 +33,11 @@ frc-calculator regional-pool 2025 --week 6 --top 50
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
-### Streamlit (V2.6.2) UX
+### Streamlit (V2.7.0) UX
 - **Global Context Bar (scope-aware)**: Single persistent bar for Season/Event on event-scoped tabs, and Season/Rules/Week on Regional Pool; selections persist across tabs and sync to URL query params
 - **Analyze Event tab**: Uses the context bar for season/event, retains improved progress and tables
 - **Calculate Points tab**: Uses the context bar for season/event; Team input is now a dropdown populated from the selected event (falls back to manual input if data unavailable)
-- **Regional Pool tab**: Season/Rules/Week moved to the context bar with detailed progress tracking and better summaries
+- **Regional Pool tab**: Season/Rules/Week moved to the context bar with detailed progress tracking, **2026 individual event points** (Event1/Event2 columns), and better summaries
 - **Event Statistics tab**: Uses the context bar for season/event; retains EPA integration and analytics
 - **Event Radar tab**: Multi-event comparison remains specialized (unchanged)
  - **Settings Dialog**: Credentials and cache controls moved into a modal; compact status bar replaces always-on controls
@@ -64,11 +64,11 @@ frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ### Points Calculation Systems
 The codebase implements two regional points systems:
 - **2025+ Rules** (`regional_points_2025()`): Used for current seasons, includes qualification points, alliance selection, playoff advancement, awards, and rookie bonuses
-- **2026 Rules** (`regional_points_2026()`): Modified system with different slot allocation and backfill rules
+- **2026 Rules** (`regional_points_2026()`): Modified system with USA (3 slots) vs International (4 slots) differentiation, enhanced qualification tracking, and individual event points breakdown
 
 ### Regional Pool Logic
 - **2025**: Weekly auto-advancement + slot fill system
-- **2026**: Top-3 per event with optional backfill
+- **2026**: USA events (3 slots) vs International events (4 slots) with enhanced qualification tracking and event-specific slot information
 - Constants for each season are defined in `config/constants.py`
 
 ### Data Flow
@@ -91,6 +91,15 @@ Notes:
 - CLI shows spinners/progress bars for long operations
 - Streamlit shows: status updates for event analysis, a progress bar + live status text + recent codes for season builds
 - Programmatic API is silent unless progress callback provided
+
+## V2.7.0 Highlights
+- **2026 Regional Advancement Integration**: Implemented official FIRST 2026 regional advancement rules with USA (3 slots) vs International (4 slots) differentiation
+- **Enhanced Individual Event Tracking**: Added Event1/Event2 points breakdown in Regional Pool display for detailed performance analysis
+- **Expanded Regional Points System**: Extended regional points tracking from 7 to 9 elements to support individual event point storage
+- **Enhanced Qualification Tracking**: Updated qualification formatting to include event codes and specific slot information (e.g., "AZVA Slot 1 (Week 3 Slot 15)")
+- **Improved Progress Tracking**: Fixed Regional Pool progress counting to show cumulative events across all weeks through target week
+- **Team Data Enhancement**: Added rookieYear, name, and districtCode properties to SeasonTeam for richer team information
+- **Backward Compatibility**: All existing 2025 functionality remains intact with full test coverage
 
 ## V2.6.2 Highlights
 - **Radar Chart Theme Fix**: Fixed radar chart text visibility in light theme using proper `st.context.theme.type` detection

@@ -2,17 +2,20 @@
 
 [English](README.md) | [中文（简体）](README.zh-CN.md)
 
-Analyzer and points calculator for FRC (FIRST Robotics Competition) events. Implements 2025+ regional points rules, supports full-season pool calculation, and provides both CLI and Python API with local caching and live progress indicators.
+Analyzer and points calculator for FRC (FIRST Robotics Competition) events. Implements 2025+ and 2026 regional points rules with enhanced qualification tracking, supports full-season pool calculation, and provides both CLI and modern Streamlit dashboard with local caching and live progress indicators.
 
 ## Features
 
 - Event analysis: teams, rankings, alliances, matches, awards
-- 2025+ regional points: qualification, alliance selection, playoff advancement, awards, rookie bonuses
-- Regional pool: weekly auto-advancement + slot fill rules (2025); top‑3 per event with backfill option (2026)
-- Caching: automatic JSON caching of FRC Events API responses under `cache/`
-- Progress: spinners and progress bars for long fetches in CLI
-- Statbotics EPA: optional per-event EPA retrieval
-- CLI and API: human‑readable tables and JSON output
+- **2025+ regional points**: qualification, alliance selection, playoff advancement, awards, rookie bonuses
+- **2026 regional advancement**: USA (3 slots) vs International (4 slots), enhanced qualification tracking
+- **Regional pool**: weekly auto-advancement + slot fill rules (2025); top‑3 per event with backfill option (2026)
+- **Streamlit dashboard**: modern web UI with event statistics, radar charts, and regional pool visualization
+- **Individual event tracking**: Event1/Event2 points breakdown for detailed performance analysis
+- **Caching**: automatic JSON caching of FRC Events API responses under `cache/`
+- **Progress indicators**: spinners and progress bars for long fetches in CLI and web UI
+- **Statbotics EPA**: optional per-event EPA retrieval with comprehensive analytics
+- **CLI and API**: human‑readable tables and JSON output
 
 ## Requirements
 
@@ -51,15 +54,17 @@ frc-calculator analyze-event 2024 AZVA
 frc-calculator calculate-points 2024 AZVA 1234 --verbose
 frc-calculator calculate-points 2024 AZVA 1234 --json
 
-# View regional pool standings
+# View regional pool standings (2025 rules)
 frc-calculator regional-pool 2025 --week 6 --top 50
+
+# View regional pool standings (2026 rules with enhanced tracking)
 frc-calculator regional-pool 2026 --week 3 --use-season 2026
 ```
 
 Notes:
 - `regional-pool` first counts season events (fast) and then builds each event (slow, with a progress bar). Subsequent runs are faster due to caching under `cache/`.
 
-## Streamlit Dashboard (v2.6.2)
+## Streamlit Dashboard (v2.7.0)
 
 A modern, user-friendly Streamlit dashboard with enhanced UI/UX and comprehensive FRC event analysis tools.
 
@@ -81,7 +86,7 @@ streamlit run src/frc_calculator/ui/streamlit_app.py
 - **🧭 Global Context Bar (NEW)**: Single, persistent bar for Season/Event (event‑scoped tabs) and Season/Rules/Week (Regional Pool). Selections persist across tabs and sync to the URL for deep links.
 - **🏆 Event Analysis**: Smart event selection (dropdown + manual override), improved progress tracking, and formatted data tables with team info
 - **📊 Points Calculator**: Team dropdown populated from the selected event for intuitive selection; enhanced results with visual points breakdown and team details
-- **🏁 Regional Pool**: Season‑scoped inputs moved into the context bar with detailed progress tracking, qualification status indicators, and summary statistics
+- **🏁 Regional Pool**: Season‑scoped inputs moved into the context bar with detailed progress tracking, **2026 individual event points** (Event1/Event2 columns), qualification status indicators, and summary statistics
 - **📈 Event Statistics**: Comprehensive event analysis with score trends, playoff performance, EPA integration, and statistical insights
 - **📡 Event Radar**: NEW! 8-dimensional radar chart analysis providing comprehensive event insights across multiple performance metrics including competitiveness, team strength, and playoff performance
 

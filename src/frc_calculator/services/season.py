@@ -37,6 +37,8 @@ class Season:
         mSeasonTeam = self.get_season_team_from_number(teamNumber)
         mSeasonTeam.name = eventTeam.name
         mSeasonTeam.rookieYear = eventTeam.rookieYear
+        mSeasonTeam.name = eventTeam.name
+        mSeasonTeam.rookieYear = eventTeam.rookieYear
         mSeasonTeam.districtCode = eventTeam.districtCode
         mSeasonTeam.events.append((weekNumber, eventTeam.event))
         mSeasonTeam.eventTeams.append((weekNumber, eventTeam))
@@ -52,6 +54,8 @@ class Season:
 
     def register_event(self, weekNumber: int, eventCode: str, country: str):
         mEvent = Event(self.season, eventCode, progress=None)
+        mEvent.weekNumber = weekNumber
+        mEvent.country = country
         mEvent.weekNumber = weekNumber
         mEvent.country = country
         if weekNumber not in self.events:
@@ -108,7 +112,7 @@ class Season:
                     ):
                         poolCount += 1
                         mSeasonTeam.isQualified = True
-                        mSeasonTeam.qualifiedFor = f"{mAutoAdvancement["qualifiedFor"]} (Week {weekNumber} Slot {poolCount})"
+                        mSeasonTeam.qualifiedFor = f"{mAutoAdvancement['qualifiedFor']} (Week {weekNumber} Slot {poolCount})"
                         mSeasonTeam.qualifiedEvent = mAutoAdvancement["qualifiedEvent"]
                     succession += 1
             case 2026:
