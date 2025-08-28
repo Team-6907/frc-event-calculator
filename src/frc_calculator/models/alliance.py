@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import override
 
 
@@ -56,3 +58,4 @@ class Alliance(AllianceBase):
                 if final or mMatch not in self.event.get_finals():
                     result.append(mMatch)
         return result
+

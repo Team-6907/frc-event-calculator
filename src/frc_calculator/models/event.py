@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from rich import print
 
-from Team import Team
-from Alliance import Alliance
-from Match import Match
-from Requests import (
+from frc_calculator.models.team import Team
+from frc_calculator.models.alliance import Alliance
+from frc_calculator.models.match import Match
+from frc_calculator.data.frc_events import (
     request_event_alliances,
     request_event_awards,
     request_event_rankings,
@@ -14,9 +16,10 @@ from Requests import (
 
 
 class Event:
-    def __init__(self, season: int, eventCode: str):
+    def __init__(self, season: int, eventCode: str, *, progress=None):
         self.season = season
         self.eventCode = eventCode
+        self._progress = progress
 
         self.rankings = {}
         self.alliances = {}
@@ -36,16 +39,24 @@ class Event:
 
     def __repr__(self):
         return self.__str__()
-    
-    # Methods to initialize an event
 
     def get_event_teams(self):
+        if self._progress:
+            try:
+                self._progress(f"{self.eventCode}: teams")
+            except Exception:
+                pass
         teams = request_event_teams(self.season, self.eventCode)
         for teamData in teams:
             self.register_team(teamData)
         return teams
 
     def get_event_rankings(self):
+        if self._progress:
+            try:
+                self._progress(f"{self.eventCode}: rankings")
+            except Exception:
+                pass
         rankings = request_event_rankings(self.season, self.eventCode)
         for rankingData in rankings:
             mTeam = self.update_rankings(rankingData)
@@ -53,6 +64,11 @@ class Event:
         return rankings
 
     def get_event_alliances(self):
+        if self._progress:
+            try:
+                self._progress(f"{self.eventCode}: alliances")
+            except Exception:
+                pass
         alliances = request_event_alliances(self.season, self.eventCode)
         for allianceData in alliances:
             mAlliance = Alliance(self)
@@ -77,14 +93,29 @@ class Event:
         return alliances
 
     def get_event_matches(self):
+        if self._progress:
+            try:
+                self._progress(f"{self.eventCode}: quals matches")
+            except Exception:
+                pass
         qualsMatches = request_quals_matches(self.season, self.eventCode)
         playoffMatches = request_playoff_matches(self.season, self.eventCode)
+        if self._progress:
+            try:
+                self._progress(f"{self.eventCode}: playoff matches")
+            except Exception:
+                pass
         for match in qualsMatches:
             self.register_match(match, "qualification")
         for match in playoffMatches:
             self.register_match(match, "playoff")
 
     def get_event_awards(self):
+        if self._progress:
+            try:
+                self._progress(f"{self.eventCode}: awards")
+            except Exception:
+                pass
         awards = request_event_awards(self.season, self.eventCode)
         for awardData in awards:
             self.register_team_award(awardData)
@@ -171,9 +202,6 @@ class Event:
             self.awards[awardName] = [mAwardTo]
 
     def get_team_from_number(self, teamNumber) -> Team:
-        """
-        Get Team base on the TeamNumber.
-        """
         mTeam = self.teams[teamNumber]
         return mTeam
 
@@ -185,21 +213,21 @@ class Event:
         mAlliance = self.alliances[allianceNumber]
         return mAlliance
 
-    def get_quals_from_number(self, matchNumber) -> Match:
+    def get_quals_from_number(self, matchNumber) -> Match | None:
         try:
             mMatch = self.qualsMatches[matchNumber]
             return mMatch
         except KeyError:
             return None
 
-    def get_playoff_from_number(self, matchNumber) -> Match:
+    def get_playoff_from_number(self, matchNumber) -> Match | None:
         try:
             mMatch = self.playoffMatches[matchNumber]
             return mMatch
         except KeyError:
             return None
 
-    def get_final_from_number(self, finalNumber) -> Match:
+    def get_final_from_number(self, finalNumber) -> Match | None:
         if self.season <= 2022:
             matchNumber = finalNumber + 18
         else:
@@ -207,7 +235,7 @@ class Event:
         mMatch = self.get_playoff_from_number(matchNumber)
         return mMatch
 
-    def get_finals(self) -> Match:
+    def get_finals(self):
         return (
             self.get_final_from_number(1),
             self.get_final_from_number(2),
@@ -224,7 +252,7 @@ class Event:
         else:
             return self.get_final_from_number(3).get_match_winloser()
 
-    def get_playoff_from_round_2022(self, round, roundNumber, finalNumber) -> Match:
+    def get_playoff_from_round_2022(self, round, roundNumber, finalNumber):
         if self.season <= 2022:
             if finalNumber not in [1, 2, 3]:
                 return None
@@ -281,27 +309,5 @@ class Event:
         return rankings
 
     def get_regional_statistics_2025(self):
-        """
-        Important statistics for the event (2025+ season only).
-        """
-
-        # the average score of the current regional
-        s = 0
-        for mMatch in self.qualsMatches:
-            s += mMatch.redScore[0]
-            s += mMatch.blueScore[0]
-        avgScore = s / (len(self.qualsMatches) * 2)
-
-        # the score of Match 11-16
-        titleScore = {}
-        s = []
-        for matchNumber in range(11, 17):
-            mMatch = self.get_playoff_from_number(matchNumber)
-            
-
-        # the RP of rank 1, 4, 8
-        RP = {}
-        for rank in (1, 4, 8):
-            RP[rank] = self.get_team_from_rank(rank).sortOrder[0]
-        
-        # 
+        # Incomplete in original code; keeping stub to preserve interface.
+        pass

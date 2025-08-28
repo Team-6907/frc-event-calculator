@@ -1,9 +1,12 @@
-from Utils import erfinv
-from rich import print
-import math
+from __future__ import annotations
 
-from Requests import request_regional_adjustments, request_statbotics_epa
-from Constants import get_constants
+import math
+from rich import print
+
+from frc_calculator.data.frc_events import request_regional_adjustments
+from frc_calculator.data.statbotics import request_statbotics_epa
+from frc_calculator.config.constants import get_constants
+from frc_calculator.utils.math_utils import erfinv
 
 
 class Team:
@@ -41,16 +44,10 @@ class Team:
         return self.__str__()
 
     def register_alliance(self, mAlliance, allianceRole: int):
-
-        # simulating alliance selection
         self.alliance = mAlliance
         self.allianceRole = allianceRole
 
     def succession(self):
-        """
-        The succession in the alliance selection.
-        """
-        # self-calculate alliance succession
         if self.alliance is not None:
             match self.allianceRole:
                 case 1:
@@ -67,9 +64,6 @@ class Team:
             return None
 
     def succession_of_points(self):
-        """
-        The succession of a team based on regional pool rules.
-        """
         if self.alliance is not None:
             match self.allianceRole:
                 case 1:
@@ -84,9 +78,6 @@ class Team:
             return 17
 
     def get_win_playoffs(self, final=True):
-        """
-        The playoffs a team wins if eligible.
-        """
         result = []
         for mMatch in self.playoffMatches:
             if mMatch.result_query(self) == "win":
@@ -95,9 +86,6 @@ class Team:
         return result
 
     def get_win_finals(self):
-        """
-        The finals a team wins if eligible.
-        """
         result = []
         for mMatch in self.event.get_finals():
             if mMatch.result_query(self) == "win" and mMatch in self.get_win_playoffs():
@@ -190,9 +178,6 @@ class Team:
             return 0
 
     def best_3_match_score(self):
-        """
-        The best 3 score of matches a team participated in.
-        """
         scores = [0, 0, 0]
         matches = self.qualsMatches + self.playoffMatches
         for mMatch in matches:
@@ -205,9 +190,6 @@ class Team:
         return tuple(scores[0:3])
 
     def regional_points_2025(self):
-        """
-        The Regional Points a team earns at a single event.
-        """
         teamAgePoints = self.team_age_points_2025()
         qualsPoints = self.qualification_points_2025()
         alliancePoints = self.alliance_selection_points_2025()
@@ -222,9 +204,6 @@ class Team:
         )
 
     def verbose_regional_points_2025(self):
-        """
-        Print the Regional Points details.
-        """
         print(
             f"""
             Suppose [green][{self.event.season} {self.event.eventCode}][/green] is held in [green]2025[/green], [red]Team {self.teamNumber}[/red] gets event points as follows:
@@ -238,11 +217,8 @@ class Team:
             Therefore, [red]Team {self.teamNumber}[/red] might be {"[green]ELIGIBLE[/green]" if round(self.regional_points_2025()[0] * 1.6) >= 69 else "[red]NOT ELIGIBLE[/red]"} to the FIRST Championship.
             """
         )
-    
+
     def get_statbotics_epa(self):
-        """
-        Get EPA from Statbotics.
-        """
         return request_statbotics_epa(self.event.season, self.teamNumber, self.event.eventCode)
 
 
@@ -275,9 +251,6 @@ class SeasonTeam:
 
     @property
     def isPrequalified(self):
-        """
-        Whether a team is pre-qualified before the season starts.
-        """
         Const = get_constants(self.season)
         if self.teamNumber in Const.preQualified:
             return True
@@ -286,9 +259,6 @@ class SeasonTeam:
 
     @property
     def isDeclined(self):
-        """
-        Whether a team has declined the Championship in the Regional Pool.
-        """
         Const = get_constants(self.season)
         if self.teamNumber in Const.declined:
             return True
@@ -296,9 +266,6 @@ class SeasonTeam:
             return False
 
     def events_before_week_number(self, weekNumber: int):
-        """
-        The `Team`s a `SeasonTeam` shows up as before and during a week.
-        """
         events = []
         for mWeekEventTeam in self.eventTeams:
             if mWeekEventTeam[0] <= weekNumber:
@@ -306,9 +273,6 @@ class SeasonTeam:
         return events
 
     def events_at_week_number(self, weekNumber: int):
-        """
-        The `Team`s a `SeasonTeam` shows up as during a week.
-        """
         events = []
         for mWeekEventTeam in self.eventTeams:
             if mWeekEventTeam[0] == weekNumber:
@@ -316,9 +280,6 @@ class SeasonTeam:
         return events
 
     def get_regional_points(self, weekNumber: int):
-        """
-        Calculate a `SeasonTeam`'s total regional points in the season.
-        """
         events = self.events_before_week_number(weekNumber)
         regionalPoints = [0, 0, 0, 0, 0, 0, 0]
         eventCount = 0
@@ -340,17 +301,12 @@ class SeasonTeam:
         return tuple(regionalPoints)
 
     def get_auto_advancement_2025(self, weekNumber: int):
-        """
-        Decide whether a team is auto-eligible in 2025 at this week.
-        That is: FIA, EI or Winner Captain and 1st pick.
-        """
         preQualifiedResult = {
             "isQualified": True,
             "qualifiedFor": "Pre-qualified",
             "qualifiedEvent": None,
         }
 
-        # currently support: 2025-2026 only
         Const = get_constants(self.season)
         if self.teamNumber in Const.preQualified:
             return preQualifiedResult
@@ -391,3 +347,4 @@ class SeasonTeam:
             }
         else:
             return {"isQualified": False, "qualifiedFor": None, "qualifiedEvent": None}
+

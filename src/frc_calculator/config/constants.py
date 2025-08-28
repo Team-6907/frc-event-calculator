@@ -3,23 +3,8 @@ import math
 
 class SeasonConstants:
     """
-    class.variables requirement:
-
-    prequalified: tuple
-    championshipSlots: int
-    prequalifiedCount: int
-
-    totalTeamCount: int
-    districtTeamCount: int
-
-    regionalError: int
-
-    regionalsCountPerWeek: tuple[5]
-    regionalsCount: int
-
-    ironBowl: int
-
-    weeksError: tuple[5]
+    Season-level constants and derived values.
+    Mirrors current behavior from Constants.py.
     """
 
     @classmethod
@@ -44,8 +29,7 @@ class SeasonConstants:
     @classmethod
     def regionalsProportionPerWeek(cls):
         return tuple(
-            weeklyCount / cls.regionalsCount
-            for weeklyCount in cls.regionalsCountPerWeek
+            weeklyCount / cls.regionalsCount for weeklyCount in cls.regionalsCountPerWeek
         )
 
     @classmethod
@@ -170,7 +154,7 @@ class Season2026Constants(SeasonConstants):
     ironBowl = 3
 
 
-def get_constants(season):
+def get_constants(season: int):
     match season:
         case 2025:
             return Season2025Constants
@@ -178,3 +162,4 @@ def get_constants(season):
             return Season2026Constants
         case _:
             return DefaultConstants
+
