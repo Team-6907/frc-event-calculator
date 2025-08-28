@@ -234,12 +234,21 @@ class SeasonTeam:
         self.events = []
         self.eventTeams = []
 
+        # waiting for requests
+        self.rookieYear = 0
+        self.name = ""
+        self.districtCode = None
+
         if self.isPrequalified:
             self.isQualified = True
             self.qualifiedFor = "Pre-qualified"
         else:
             self.isQualified = False
             self.qualifiedFor = None
+        
+        if self.isDeclined:
+            self.isQualified = False
+            self.qualifiedFor = "Declined"
 
         self.qualifiedEvent = None
 
@@ -281,12 +290,13 @@ class SeasonTeam:
 
     def get_regional_points(self, weekNumber: int):
         events = self.events_before_week_number(weekNumber)
-        regionalPoints = [0, 0, 0, 0, 0, 0, 0]
+        regionalPoints = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         eventCount = 0
         for mEventTeam in events:
             currentPoints = mEventTeam.regional_points_2025()
             if eventCount <= 1:
                 regionalPoints[0] += currentPoints[0]
+                regionalPoints[eventCount + 7] = currentPoints[0]
             regionalPoints[1] = max(regionalPoints[1], currentPoints[1])
             regionalPoints[2] = max(regionalPoints[2], currentPoints[2])
             regionalPoints[3] = max(regionalPoints[3], currentPoints[3])
@@ -321,21 +331,21 @@ class SeasonTeam:
         for mEventTeam in events:
             if "Regional FIRST Impact Award" in mEventTeam.awards:
                 qualified = True
-                qualifyInfo = "FIA"
+                qualifyInfo = f"{mEventTeam.event.eventCode} FIA"
                 qualifyEvent = mEventTeam.event
             elif "Regional Chairman's Award" in mEventTeam.awards:
                 qualified = True
-                qualifyInfo = "FIA"
+                qualifyInfo = f"{mEventTeam.event.eventCode} FIA"
                 qualifyEvent = mEventTeam.event
             elif "Regional Engineering Inspiration Award" in mEventTeam.awards:
                 qualified = True
-                qualifyInfo = "EI"
+                qualifyInfo = f"{mEventTeam.event.eventCode} EI"
                 qualifyEvent = mEventTeam.event
             elif (
                 "Regional Winners" in mEventTeam.awards and mEventTeam.allianceRole <= 2
             ):
                 qualified = True
-                qualifyInfo = "Winner"
+                qualifyInfo = f"{mEventTeam.event.eventCode} Winner"
                 qualifyEvent = mEventTeam.event
             if qualified:
                 break

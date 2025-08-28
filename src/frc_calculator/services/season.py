@@ -30,11 +30,13 @@ class Season:
         for weekNumber in weeks_to_process:
             weekStr = f"Week {weekNumber}"
             for eventData in seasonData[weekStr]["Events"]:
-                self.register_event(weekNumber, eventData["code"])
+                self.register_event(weekNumber, eventData["code"], eventData["country"])
 
     def register_season_team(self, eventTeam: Team, weekNumber: int):
         teamNumber = eventTeam.teamNumber
         mSeasonTeam = self.get_season_team_from_number(teamNumber)
+        mSeasonTeam.name = eventTeam.name
+        mSeasonTeam.rookieYear = eventTeam.rookieYear
         mSeasonTeam.districtCode = eventTeam.districtCode
         mSeasonTeam.events.append((weekNumber, eventTeam.event))
         mSeasonTeam.eventTeams.append((weekNumber, eventTeam))
@@ -48,8 +50,10 @@ class Season:
             mSeasonTeam = self.seasonTeams[teamNumber]
         return mSeasonTeam
 
-    def register_event(self, weekNumber: int, eventCode: str):
+    def register_event(self, weekNumber: int, eventCode: str, country: str):
         mEvent = Event(self.season, eventCode, progress=None)
+        mEvent.weekNumber = weekNumber
+        mEvent.country = country
         if weekNumber not in self.events:
             self.events[weekNumber] = [mEvent]
         else:
@@ -76,15 +80,17 @@ class Season:
                     *(mSeasonTeam.get_regional_points(weekNumber)),
                     mSeasonTeam.teamNumber,
                 )
-                if sortCriteria[0:7] != (0, 0, 0, 0, 0, 0, 0):
+                if sortCriteria[0:7] != (0, 0, 0, 0, 0, 0, 0, 0, 0):
                     sortPool.append(sortCriteria)
         sortPool = sorted(sortPool, reverse=True)
         regionalPool = {}
         for index in range(len(sortPool)):
             sortCriteria = sortPool[index]
             regionalPool[index + 1] = {
-                "team": self.get_season_team_from_number(sortCriteria[7]),
+                "team": self.get_season_team_from_number(sortCriteria[9]),
                 "points": sortCriteria[0:7],
+                "firstEvent": sortCriteria[7],
+                "secondEvent": sortCriteria[8]
             }
 
         poolCount = 0
@@ -102,7 +108,7 @@ class Season:
                     ):
                         poolCount += 1
                         mSeasonTeam.isQualified = True
-                        mSeasonTeam.qualifiedFor = mAutoAdvancement["qualifiedFor"]
+                        mSeasonTeam.qualifiedFor = f"{mAutoAdvancement["qualifiedFor"]} (Week {weekNumber} Slot {poolCount})"
                         mSeasonTeam.qualifiedEvent = mAutoAdvancement["qualifiedEvent"]
                     succession += 1
             case 2026:
@@ -112,35 +118,28 @@ class Season:
                     events = self.events[weekNumber]
                 for mEvent in events:
                     rankings = mEvent.get_regional_points_rankings_2026()
-                    if self.allowBackfillIn2026:
-                        autoAdvancementCount = 0
-                        succession = 1
-                        while autoAdvancementCount < 3:
-                            try:
-                                mTeam = rankings[succession]["team"]
-                            except KeyError:
-                                break
-                            mSeasonTeam = mTeam.seasonTeam
-                            if not mSeasonTeam.isQualified:
-                                if not mSeasonTeam.isDeclined:
-                                    poolCount += 1
-                                    mSeasonTeam.isQualified = True
-                                    mSeasonTeam.qualifiedFor = (
-                                        f"Slot {autoAdvancementCount + 1}"
-                                    )
-                                    mSeasonTeam.qualifiedEvent = mTeam.event
-                                autoAdvancementCount += 1
-                            succession += 1
+                    autoAdvancementCount = 0
+                    succession = 1
+                    if mEvent.country == "USA":
+                        ironBowl = 3
                     else:
-                        for rank in range(1, 4):
-                            mTeam = rankings[rank]["team"]
-                            mSeasonTeam = mTeam.seasonTeam
-                            if not mSeasonTeam.isQualified:
-                                if not mSeasonTeam.isDeclined:
-                                    poolCount += 1
-                                    mSeasonTeam.isQualified = True
-                                    mSeasonTeam.qualifiedFor = f"Rank {rank}"
-                                    mSeasonTeam.qualifiedEvent = mTeam.event
+                        ironBowl = 4
+                    while autoAdvancementCount < ironBowl:
+                        try:
+                            mTeam = rankings[succession]["team"]
+                        except KeyError:
+                            break
+                        mSeasonTeam = mTeam.seasonTeam
+                        if not mSeasonTeam.isQualified:
+                            if not mSeasonTeam.isDeclined:
+                                poolCount += 1
+                                mSeasonTeam.isQualified = True
+                                mSeasonTeam.qualifiedFor = (
+                                    f"{mTeam.event.eventCode} Slot {autoAdvancementCount + 1} (Week {weekNumber} Slot {poolCount})"
+                                )
+                                mSeasonTeam.qualifiedEvent = mTeam.event
+                            autoAdvancementCount += 1
+                        succession += 1
 
         succession = 1
         Const = get_constants(self.useSeason)
@@ -152,7 +151,7 @@ class Season:
                 if not mSeasonTeam.isDeclined:
                     poolCount += 1
                     mSeasonTeam.isQualified = True
-                    mSeasonTeam.qualifiedFor = f"Week {weekNumber}"
+                    mSeasonTeam.qualifiedFor = f"Week {weekNumber} Slot {poolCount}"
             succession += 1
 
         for rank, mRanking in regionalPool.items():
