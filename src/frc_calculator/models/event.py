@@ -19,6 +19,7 @@ class Event:
     def __init__(self, season: int, eventCode: str, *, progress=None):
         self.season = season
         self.eventCode = eventCode
+        self.weekNumber = 0
         self._progress = progress
 
         self.rankings = {}

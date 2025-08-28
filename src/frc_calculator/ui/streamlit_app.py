@@ -558,7 +558,9 @@ def render_regional_pool_tab() -> None:
         try:
             listings = request_event_listings(season_int)
             # Only count events for the requested week, not all weeks
-            total_events = len(listings.get(f"Week {week_int}", {}).get("Events", []))
+            total_events = 0
+            for week in range(1, week_int + 1):
+                total_events += len(listings.get(f"Week {week}", {}).get("Events", []))
         except Exception:
             total_events = 0
 
@@ -622,6 +624,8 @@ def render_regional_pool_tab() -> None:
                     "Team #": row["team"].teamNumber,
                     "Team Name": getattr(row["team"], "name", "—"),
                     "Points": row["points"][0],
+                    "Event 1": row["firstEvent"],
+                    "Event 2": row["secondEvent"],
                     "Qualified": qualified_status,
                     "Qualification Reason": row["qualified"]["qualifiedFor"] or "—",
                 }
@@ -642,8 +646,12 @@ def render_regional_pool_tab() -> None:
                 column_config={
                     "Rank": st.column_config.NumberColumn(width="small"),
                     "Team #": st.column_config.NumberColumn(width="small"),
-                    "Points": st.column_config.NumberColumn(width="medium"),
+                    "Team Name": st.column_config.TextColumn(width="medium"),
+                    "Points": st.column_config.NumberColumn(width="small"),
+                    "Event 1": st.column_config.NumberColumn(width="small"),
+                    "Event 2": st.column_config.NumberColumn(width="small"),
                     "Qualified": st.column_config.TextColumn(width="small"),
+                    "Qualification Reason": st.column_config.TextColumn(width="medium"),
                 },
             )
 

@@ -144,14 +144,16 @@ class Season2026Constants(SeasonConstants):
     prequalifiedCount = 9
 
     totalTeamCount = 3522
-    districtTeamCount = 1670 + 289 + 69  # California 289, Wisconsin 69
+    districtTeamCount = 1670
 
     regionalError = -6
 
     regionalsCountPerWeek = (18, 15, 14, 10, 12)
-    regionalsCount = 80
+    regionalsCount = 69
 
     ironBowl = 3
+
+    # Temporary Data from 2025, ignore W7
 
 
 def get_constants(season: int):
