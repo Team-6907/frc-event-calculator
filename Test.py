@@ -1,6 +1,6 @@
 import unittest
 
-from Event import Event
+from src.frc_calculator.models.event import Event
 
 
 class EventTest(unittest.TestCase):
