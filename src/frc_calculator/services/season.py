@@ -167,4 +167,5 @@ class Season:
                 "declined": mSeasonTeam.isDeclined,
             }
 
+
         return regionalPool

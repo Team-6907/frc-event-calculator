@@ -135,9 +135,7 @@ def render_radar_chart_comparison(
             )
         )
 
-    all_values = [val for data in all_radar_data.values() for val in data.values() if isinstance(val, (int, float))]
-    max_value = max(all_values) if all_values else 20
-    scale_max = max(20, max_value * 1.2)
+    scale_max = 1
 
     # Detect theme using st.context.theme.type
     is_dark_theme = st.context.theme.type == "dark"
@@ -180,17 +178,23 @@ def render_radar_chart_comparison(
 
 
 def render_radar_dimensions_comparison(
-    all_radar_data: Dict[str, Dict[str, float]],
+    final_data: Dict[str, Dict[str, float]], all_radar_data: Dict[str, Dict[str, float]]
 ) -> None:
     """Render comparison breakdown table and per-dimension metrics across events."""
     st.markdown("### 📊 Dimensional Comparison")
 
-    dimensions = list(next(iter(all_radar_data.values())).keys()) if all_radar_data else []
+    dimensions = list(next(iter(final_data.values())).keys()) if final_data else []
     comparison_data = []
-    for event_code, radar_data in all_radar_data.items():
+    for event_code, radar_data in final_data.items():
         row = {"Event": event_code}
         for dimension in dimensions:
-            row[dimension] = f"{radar_data.get(dimension, 0):.2f}"
+            if radar_data[dimension] and all_radar_data[event_code][dimension] != 6907:
+                if dimension in ["REIGN", "CHAMP"]:
+                    row[dimension] = f"{radar_data.get(dimension, 0):.2f} ({all_radar_data[event_code].get(dimension, 0):.0f})"
+                else:
+                    row[dimension] = f"{radar_data.get(dimension, 0):.2f} ({all_radar_data[event_code].get(dimension, 0):.2f})"
+            else:
+                row[dimension] = "—"
         total_score = sum(v for v in radar_data.values() if isinstance(v, (int, float)))
         avg_score = total_score / len(radar_data) if radar_data else 0
         row["Total"] = f"{total_score:.1f}"
@@ -202,20 +206,10 @@ def render_radar_dimensions_comparison(
         df = pd.DataFrame(comparison_data)
         st.dataframe(df, use_container_width=True)
 
-    st.markdown("#### 📊 Dimension-by-Dimension Analysis")
-    for dimension in dimensions:
-        st.markdown(f"**{dimension}**")
-        cols = st.columns(len(all_radar_data))
-        for i, (event_code, radar_data) in enumerate(all_radar_data.items()):
-            with cols[i]:
-                value = radar_data.get(dimension, 0)
-                st.metric(event_code, f"{value:.2f}")
-        st.markdown("---")
-
     st.markdown("#### 📈 Comparison Summary")
     best_performers = {}
     for dimension in dimensions:
-        best_event = max(all_radar_data.items(), key=lambda x: x[1].get(dimension, 0))
+        best_event = max(final_data.items(), key=lambda x: x[1].get(dimension, 0))
         best_performers[dimension] = (best_event[0], best_event[1].get(dimension, 0))
 
     col1, col2 = st.columns(2)
@@ -225,7 +219,7 @@ def render_radar_dimensions_comparison(
             st.markdown(f"- **{dimension}**: {event} ({score:.2f})")
     with col2:
         event_totals = {}
-        for event_code, radar_data in all_radar_data.items():
+        for event_code, radar_data in final_data.items():
             total = sum(v for v in radar_data.values() if isinstance(v, (int, float)))
             event_totals[event_code] = total
         sorted_events = sorted(event_totals.items(), key=lambda x: x[1], reverse=True)

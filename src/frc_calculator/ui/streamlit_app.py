@@ -512,6 +512,69 @@ def render_points_tab() -> None:
             st.exception(e)
 
 
+def render_loading_season(season_int, use_season_int, pool_week):
+        # Pre-count events for better progress tracking
+    week_int = pool_week
+
+    try:
+        listings = request_event_listings(season_int)
+        # Only count events for the requested week, not all weeks
+        total_events = 0
+        for week in range(1, week_int + 1):
+            total_events += len(listings.get(f"Week {week}", {}).get("Events", []))
+    except Exception:
+        total_events = 0
+
+    if total_events <= 0:
+        with st.spinner("🔄 Building season data (this may take a while)..."):
+            season_obj = Season(
+                season_int, useSeason=use_season_int, max_week=week_int
+            )
+    else:
+        st.info(
+            f"📊 **Building {total_events} events through week {week_int}**\n\n"
+            f"This may take several minutes on first run. Cached data will speed up future runs."
+        )
+
+        # Enhanced progress tracking
+        progress_bar = st.progress(0.0)
+        status_placeholder = st.empty()
+        recent_placeholder = st.empty()
+        built = 0
+        recent_codes: list[str] = []
+
+        def on_event_built(_code: str):
+            nonlocal built, recent_codes
+            built += 1
+            recent_codes.append(_code)
+            try:
+                progress = min(built / total_events, 1.0)
+                progress_bar.progress(progress)
+
+                status_placeholder.markdown(
+                    f"**Progress:** {built}/{total_events} events ({progress:.1%})\n\n"
+                    f"**Currently processing:** {_code}"
+                )
+
+                recent_display = ", ".join(recent_codes[-6:])
+                recent_placeholder.caption(
+                    f"🔄 Recently processed: {recent_display}"
+                )
+            except Exception:
+                pass
+
+        season_obj = Season(
+            season_int,
+            useSeason=use_season_int,
+            progress=on_event_built,
+            max_week=week_int,
+        )
+        progress_bar.progress(1.0)
+        status_placeholder.success("✅ All events in the season processed successfully!")
+    
+    return season_obj
+
+
 def render_regional_pool_tab() -> None:
     st.markdown("### 🏁 Regional Pool Standings")
     st.markdown(
@@ -551,65 +614,9 @@ def render_regional_pool_tab() -> None:
             )
             return
 
-        # Pre-count events for better progress tracking
         week_int = int(ctx.get("pool_week"))
-        top_n_int = int(top_n_int) if top_n_int != 0 else 0
 
-        try:
-            listings = request_event_listings(season_int)
-            # Only count events for the requested week, not all weeks
-            total_events = 0
-            for week in range(1, week_int + 1):
-                total_events += len(listings.get(f"Week {week}", {}).get("Events", []))
-        except Exception:
-            total_events = 0
-
-        if total_events <= 0:
-            with st.spinner("🔄 Building season data (this may take a while)..."):
-                season_obj = Season(
-                    season_int, useSeason=use_season_int, max_week=week_int
-                )
-        else:
-            st.info(
-                f"📊 **Building {total_events} events through week {week_int}**\n\n"
-                f"This may take several minutes on first run. Cached data will speed up future runs."
-            )
-
-            # Enhanced progress tracking
-            progress_bar = st.progress(0.0)
-            status_placeholder = st.empty()
-            recent_placeholder = st.empty()
-            built = 0
-            recent_codes: list[str] = []
-
-            def on_event_built(_code: str):
-                nonlocal built, recent_codes
-                built += 1
-                recent_codes.append(_code)
-                try:
-                    progress = min(built / total_events, 1.0)
-                    progress_bar.progress(progress)
-
-                    status_placeholder.markdown(
-                        f"**Progress:** {built}/{total_events} events ({progress:.1%})\n\n"
-                        f"**Currently processing:** {_code}"
-                    )
-
-                    recent_display = ", ".join(recent_codes[-6:])
-                    recent_placeholder.caption(
-                        f"🔄 Recently processed: {recent_display}"
-                    )
-                except Exception:
-                    pass
-
-            season_obj = Season(
-                season_int,
-                useSeason=use_season_int,
-                progress=on_event_built,
-                max_week=week_int,
-            )
-            progress_bar.progress(1.0)
-            status_placeholder.success("✅ All events processed successfully!")
+        season_obj = render_loading_season(season_int, use_season_int, week_int)
 
         # Calculate pool standings
         pool = season_obj.regional_pool_2025(week_int)
@@ -1111,6 +1118,101 @@ def render_multi_year_section(
     st.metric("🔄 Returning Teams", len(multi_year_teams))
 
 
+
+def render_loading_radar_data(all_events, include_epa):
+
+    all_radar_data = {}
+    events = {}
+
+    total_events = len(all_events)
+
+    st.info(
+        f"📊 **Loading {total_events} events for radar chart comparison**\n\n"
+        f"This may take several minutes on first run. Cached data will speed up future runs."
+    )
+
+    # Enhanced progress tracking
+    progress_bar = st.progress(0.0)
+    status_placeholder = st.empty()
+    recent_placeholder = st.empty()
+    built = 0
+    recent_codes: list[str] = []
+
+    def on_event_built(_code: str):
+        nonlocal built, recent_codes
+        built += 1
+        recent_codes.append(_code)
+        try:
+            progress = min(built / total_events, 1.0)
+            progress_bar.progress(progress)
+
+            status_placeholder.markdown(
+                f"**Progress:** {built}/{total_events} events ({progress:.1%})\n\n"
+                f"**Currently processing:** {_code}"
+            )
+
+            recent_display = ", ".join(recent_codes[-6:])
+            recent_placeholder.caption(
+                f"🔄 Recently processed: {recent_display}"
+            )
+        except Exception:
+            pass
+
+    for mEvent in all_events:
+
+        events[mEvent.eventCode] = mEvent
+
+        # Radar chart calculation progress
+        epa_cb, epa_cleanup = epa_progress_ui()
+
+        def radar_progress(msg):
+            if isinstance(msg, dict) and msg.get("type") == "epa_progress":
+                # Reuse EPA progress elements
+                # Add event code to text via status lines (optional)
+                epa_cb(msg)
+
+        radar_data = calculate_radar_chart_data(
+            mEvent, progress_callback=radar_progress, include_epa=include_epa
+        )
+        all_radar_data[mEvent.eventCode] = radar_data
+
+        # Clean up progress elements
+        epa_cleanup()
+
+        on_event_built(mEvent.eventCode)
+
+    if include_epa:
+        keys = ["Overall", "RP", "TANK", "HOME", "REIGN", "TITLE", "CHAMP"]
+    else:
+        keys = ["Overall", "RP", "REIGN", "TITLE", "CHAMP"]
+
+    radar_01_data = {}
+    max_values = {}
+    min_values = {}
+    for key in keys:
+        max_value = -6907
+        min_value = 6907
+        for _, radar_data in all_radar_data.items():
+            if radar_data[key] != 6907:
+                max_value = max(max_value, radar_data[key])
+                min_value = min(min_value, radar_data[key])
+        max_values[key] = max_value
+        min_values[key] = min_value
+
+    for event_code, radar_data in all_radar_data.items():
+        radar_01_data[event_code] = {}
+        for key in keys:
+            if radar_data[key] != 6907:
+                radar_01_data[event_code][key] = (max_values[key] - radar_data[key]) / (max_values[key] - min_values[key])
+            else:
+                radar_01_data[event_code][key] = 0
+
+    progress_bar.progress(1.0)
+    status_placeholder.success("✅ All events in the season processed successfully!")
+
+    return all_radar_data, radar_01_data
+
+
 def render_event_radar_tab() -> None:
     """Render the Event Radar Chart tab with 8-dimensional analysis."""
     st.markdown("### 📡 Event Radar Comparison Analysis")
@@ -1158,66 +1260,25 @@ def render_event_radar_tab() -> None:
                     f"🔐 **Credentials required**: Set up your API credentials above to fetch data for: {', '.join(missing_events)}"
                 )
                 return
+        
+        season_obj = render_loading_season(season, season, 6)
 
-        # Load event data and calculate radar charts for all events
-        all_radar_data = {}
-        events = {}
+        all_events = []
+        for weekNumber in range(1, 7):
+            for mEvent in season_obj.events[weekNumber]:
+                all_events.append(mEvent)
 
-        with st.status(
-            f"📡 Analyzing {len(event_codes)} events for radar chart comparison...",
-            expanded=False,
-        ) as status:
-            for i, event_code in enumerate(event_codes):
-                status.write(f"• Loading {event_code}...")
+        all_radar_data, radar_01_data = render_loading_radar_data(all_events, include_epa)
 
-                # Event loading progress
-                on_progress = make_status_progress(
-                    status, filter_keys=["teams", "rankings", "alliances"]
-                )
-                event = Event(int(season), event_code, progress=on_progress)
-                events[event_code] = event
-
-                # Radar chart calculation progress
-                epa_cb, epa_cleanup = epa_progress_ui()
-
-                def radar_progress(msg):
-                    if isinstance(msg, dict) and msg.get("type") == "epa_progress":
-                        # Reuse EPA progress elements
-                        # Add event code to text via status lines (optional)
-                        epa_cb(msg)
-                    elif isinstance(msg, str):
-                        key_steps = [
-                            "Calculating Overall",
-                            "Calculating RP",
-                            "Calculating TANK",
-                            "Calculating REIGN",
-                            "Calculating Title",
-                            "Calculating CHAMP",
-                            "Fetching historical data",
-                        ]
-                        if any(step in msg for step in key_steps):
-                            try:
-                                status.write(f"• {event_code}: {msg}")
-                            except Exception:
-                                pass
-
-                radar_data = calculate_radar_chart_data(
-                    event, progress_callback=radar_progress, include_epa=include_epa
-                )
-                all_radar_data[event_code] = radar_data
-
-                # Clean up progress elements
-                epa_cleanup()
-
-            status.update(
-                label="✅ All events analyzed successfully!", state="complete"
-            )
+        final_data = {}
+        for i, event_code in enumerate(event_codes):
+            final_data[event_code] = radar_01_data[event_code]
 
         st.markdown("---")
 
         # Display radar chart comparison and analysis
-        render_radar_chart_comparison(all_radar_data, int(season))
-        render_radar_dimensions_comparison(all_radar_data)
+        render_radar_chart_comparison(final_data, int(season))
+        render_radar_dimensions_comparison(final_data, all_radar_data)
 
     except AuthError:
         st.error(

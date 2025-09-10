@@ -21,8 +21,9 @@ def calculate_average_qual_scores(event: Event) -> Dict[str, float]:
 
     for match in event.qualsMatches.values():
         if match.redScore and match.blueScore:
-            red_scores.append(match.redScore[0])  # Final score is at index 0
-            blue_scores.append(match.blueScore[0])
+            if match.redScore[0] and match.blueScore[0]:
+                red_scores.append(match.redScore[0])  # Final score is at index 0
+                blue_scores.append(match.blueScore[0])
 
     if not red_scores or not blue_scores:
         return {"red_avg": 0.0, "blue_avg": 0.0, "overall_avg": 0.0, "total_matches": 0}
@@ -440,7 +441,7 @@ def calculate_radar_chart_data(
     """Calculate the 8 dimensions for radar chart analysis."""
     radar_data = {}
 
-    # 1. Overall: Enhanced competitiveness measure (uses regional baseline)
+    # 1. Overall: Enhanced competitiveness measure
     if progress_callback:
         try:
             progress_callback("Calculating Overall dimension...")
@@ -448,12 +449,7 @@ def calculate_radar_chart_data(
             pass
 
     avg_scores = calculate_average_qual_scores(event)
-    # Use 120 as baseline for 2025 season (typical strong regional average)
-    # Scale: 120 avg = 10 points, 100 avg = 14 points, 140 avg = 6 points
-    baseline_score = 120
-    radar_data["Overall"] = max(
-        0, min(20, 10 + (baseline_score - avg_scores["overall_avg"]) / 5)
-    )
+    radar_data["Overall"] = avg_scores["overall_avg"]
 
     # 2. RP: Enhanced depth measure based on 4th team performance
     if progress_callback:
@@ -465,16 +461,12 @@ def calculate_radar_chart_data(
     try:
         fourth_team = event.get_team_from_rank(4)
         fourth_rp = fourth_team.sortOrder[0] if fourth_team.sortOrder else 0
-        # Updated formula: 20-(RP-3)*10
-        # RP = 3.0 → 20 points (weakest region)
-        # RP = 4.0 → 10 points (medium region)
-        # RP = 5.0 → 0 points (strongest region)
-        radar_data["RP"] = max(0, min(20, 20 - (fourth_rp - 3) * 10))
+        radar_data["RP"] = fourth_rp
     except (KeyError, IndexError):
         radar_data["RP"] = 0
 
-    # 3. TANK: 20 - (Non-selected teams' EPA median / 6)
-    # 4. HOME: 20 - (Recent 2 years returning teams' EPA median / 6)
+    # 3. TANK: Selected team competitiveness based on non-selected teams' EPA median
+    # 4. HOME: Ground Head Snakes scale based on recent 2 years returning teams' EPA median
     if include_epa:
         if progress_callback:
             try:
@@ -498,7 +490,7 @@ def calculate_radar_chart_data(
 
         if non_playoff_epas:
             tank_median = statistics.median(non_playoff_epas)
-            radar_data["TANK"] = max(0, 20 - (tank_median / 6))
+            radar_data["TANK"] = tank_median
         else:
             radar_data["TANK"] = 0
 
@@ -516,9 +508,9 @@ def calculate_radar_chart_data(
 
         if home_epas:
             home_median = statistics.median(home_epas)
-            radar_data["HOME"] = max(0, 20 - (home_median / 6))
+            radar_data["HOME"] = home_median
         else:
-            radar_data["HOME"] = 0
+            radar_data["HOME"] = 6907
     else:
         radar_data["TANK"] = 0
         radar_data["HOME"] = 0
@@ -547,6 +539,7 @@ def calculate_radar_chart_data(
     )
 
     for year in check_years:
+        hasHistory = 0
         if year == event.season:
             continue
 
@@ -586,7 +579,8 @@ def calculate_radar_chart_data(
                     continue
 
             # Process the historical data if available
-            if historical_data and "Alliances" in historical_data:
+            if historical_data and historical_data["Alliances"]:
+                hasHistory += 1
                 historical_top16 = set()
                 for alliance_data in historical_data["Alliances"]:
                     # Add captain (always exists)
@@ -609,10 +603,13 @@ def calculate_radar_chart_data(
 
     # REIGN: More veteran teams (stronger region) should get LOWER points (weaker region)
     # Scale: 0 teams = 20 points (weak region), 8+ teams = 0 points (strong region)
-    reign_count = len(reign_teams)
-    radar_data["REIGN"] = max(0, min(20, 20 - reign_count * 2.5))
+    if hasHistory != 0:
+        reign_count = len(reign_teams)
+    else:
+        reign_count = 6907
+    radar_data["REIGN"] = reign_count
 
-    # 6. Title: 20 - (Match 11+ average points / 10)
+    # 6. Title: Match 11+ average points
     if progress_callback:
         try:
             progress_callback("Calculating Title dimension...")
@@ -635,7 +632,7 @@ def calculate_radar_chart_data(
 
         if all_playoff_points:
             playoff_avg = statistics.mean(all_playoff_points)
-            radar_data["TITLE"] = max(0, 20 - (playoff_avg / 10))
+            radar_data["TITLE"] = playoff_avg
         else:
             radar_data["TITLE"] = 0
     else:
@@ -676,7 +673,7 @@ def calculate_radar_chart_data(
         champ_score = max(finals_scores)
         # CHAMP: Higher finals scores (stronger finals) should get LOWER points (weaker region)
         # Scale: 100 score = 18 points, 200 score = 8 points, 300 score = 0 points
-        radar_data["CHAMP"] = max(0, min(20, 20 - (champ_score / 25)))
+        radar_data["CHAMP"] = champ_score
     else:
         radar_data["CHAMP"] = 0
 
