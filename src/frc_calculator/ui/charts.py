@@ -188,7 +188,7 @@ def render_radar_dimensions_comparison(
     for event_code, radar_data in final_data.items():
         row = {"Event": event_code}
         for dimension in dimensions:
-            if radar_data[dimension] and all_radar_data[event_code][dimension] != 6907:
+            if all_radar_data[event_code][dimension] and all_radar_data[event_code][dimension] != 6907:
                 if dimension in ["REIGN", "CHAMP"]:
                     row[dimension] = f"{radar_data.get(dimension, 0):.2f} ({all_radar_data[event_code].get(dimension, 0):.0f})"
                 else:
