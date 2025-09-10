@@ -617,6 +617,17 @@ def render_regional_pool_tab() -> None:
         # Format results
         rows = []
         for rank, row in pool.items():
+            qualified_text = row["qualified"]["qualifiedFor"]
+            if qualified_text is None:
+                qualified_reason = "—"
+            elif "(Week" in qualified_text:
+                qualified_reason = "🚁 " + qualified_text
+            elif "Week" in qualified_text:
+                qualified_reason = "🌏 " + qualified_text
+            elif qualified_text == "Declined":
+                qualified_reason = "❌ Declined"
+            else:
+                qualified_reason = "⏩ Pre-qualified"
             qualified_status = "✅ Yes" if row["qualified"]["isQualified"] else "❌ No"
             rows.append(
                 {
@@ -627,7 +638,7 @@ def render_regional_pool_tab() -> None:
                     "Event 1": row["firstEvent"],
                     "Event 2": row["secondEvent"],
                     "Qualified": qualified_status,
-                    "Qualification Reason": row["qualified"]["qualifiedFor"] or "—",
+                    "Qualification Reason": qualified_reason,
                 }
             )
 
