@@ -197,8 +197,8 @@ def render_radar_dimensions_comparison(
                 row[dimension] = "—"
         total_score = sum(v for v in radar_data.values() if isinstance(v, (int, float)))
         avg_score = total_score / len(radar_data) if radar_data else 0
-        row["Total"] = f"{total_score:.1f}"
-        row["Average"] = f"{avg_score:.2f}"
+        row["Total"] = f"{total_score:.2f}"
+        row["Average"] = f"{avg_score:.3f}"
         comparison_data.append(row)
 
     if comparison_data:
